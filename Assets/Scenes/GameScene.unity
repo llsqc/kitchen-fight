@@ -26451,7 +26451,7 @@ MonoBehaviour:
   shownY: -40
   backgroundAlpha: 0.5
   testAddCardButton: {fileID: 317297023}
-  sabotageItemListSO: {fileID: 11400000, guid: c39defd619e4e154bb998e84e2861d24, type: 2}
+  cardListSO: {fileID: 11400000, guid: 9eb18559dcffc494e9723b86b32756aa, type: 2}
 --- !u!225 &969638911
 CanvasGroup:
   m_ObjectHideFlags: 0

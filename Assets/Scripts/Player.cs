@@ -106,11 +106,11 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
 
     [ServerRpc(RequireOwnership = false)]
     public void UseCardServerRpc(int itemIndex, Vector3 aimPosition, NetworkObjectReference counterRef) {
-        SabotageItemSO item = KitchenGameMultiplayer.Instance.GetSabotageItemFromIndex(itemIndex);
-        if (item == null) return;
+        CardSO card = KitchenGameMultiplayer.Instance.GetCardFromIndex(itemIndex);
+        if (card == null) return;
 
         int myTeamId = KitchenGameMultiplayer.Instance.GetTeamIdFromClientId(OwnerClientId);
-        ExecuteItemEffect(item, aimPosition, counterRef, myTeamId);
+        ExecuteItemEffect(card, aimPosition, counterRef, myTeamId);
     }
 
     [ClientRpc]
@@ -118,10 +118,8 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
         OnCardAdded?.Invoke(itemIndex);
     }
 
-    private void ExecuteItemEffect(SabotageItemSO item, Vector3 aimPosition, NetworkObjectReference counterRef, int myTeamId) {
-        bool hitAnyTarget = false;
-
-        switch (item.targetType) {
+    private void ExecuteItemEffect(CardSO card, Vector3 aimPosition, NetworkObjectReference counterRef, int myTeamId) {
+        switch (card.targetType) {
             case TargetType.Player:
                 Collider[] hits = Physics.OverlapSphere(aimPosition, PLAYER_TARGET_RADIUS, playerLayerMask);
                 foreach (var hit in hits) {
@@ -129,8 +127,7 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
                     if (targetPlayer == null || targetPlayer == this) continue;
                     var playerHost = targetPlayer.GetComponent<PlayerEffectHost>();
                     if (playerHost != null) {
-                        playerHost.ApplyEffect(item.effectType, item.duration, myTeamId);
-                        hitAnyTarget = true;
+                        playerHost.ApplyEffect(card.effectType, card.duration, myTeamId);
                     }
                 }
                 break;
@@ -138,24 +135,48 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
                 if (counterRef.TryGet(out NetworkObject counterNetObj)) {
                     var counterHost = counterNetObj.GetComponent<CounterEffectHost>();
                     if (counterHost != null) {
-                        counterHost.ApplyEffect(item.effectType, item.duration, myTeamId);
-                        hitAnyTarget = true;
+                        counterHost.ApplyEffect(card.effectType, card.duration, myTeamId);
                     }
                 }
                 break;
             case TargetType.Self:
                 var selfHost = GetComponent<PlayerEffectHost>();
-                if (selfHost != null) {
-                    selfHost.ClearAllPlayerEffects();
-                    selfHost.TriggerCleanWipeFlash();
-                }
-                if (counterRef.TryGet(out NetworkObject selfCounterNetObj)) {
-                    var selectedCounterHost = selfCounterNetObj.GetComponent<CounterEffectHost>();
-                    if (selectedCounterHost != null) {
-                        selectedCounterHost.ClearAllCounterEffects();
+                if (selfHost == null) break;
+
+                if (card.duration > 0f) {
+                    // 持续型 Buff
+                    selfHost.ApplyBuff(card.effectType, card.duration, card.magnitude);
+                } else {
+                    // 即时效果
+                    switch (card.effectType) {
+                        case EffectType.ExtraTime:
+                            KitchenGameManager.Instance.AddGameTime(card.magnitude);
+                            break;
+                        case EffectType.InstantComplete:
+                            if (counterRef.TryGet(out NetworkObject instantCounterNetObj)) {
+                                var cuttingCounter = instantCounterNetObj.GetComponent<CuttingCounter>();
+                                if (cuttingCounter != null) {
+                                    cuttingCounter.InstantComplete();
+                                }
+                                var stoveCounter = instantCounterNetObj.GetComponent<StoveCounter>();
+                                if (stoveCounter != null) {
+                                    stoveCounter.InstantComplete();
+                                }
+                            }
+                            break;
+                        case EffectType.SelfClean:
+                        case EffectType.CleanWipe:
+                            selfHost.ClearAllPlayerEffects();
+                            selfHost.TriggerCleanWipeFlash();
+                            if (counterRef.TryGet(out NetworkObject selfCounterNetObj)) {
+                                var selectedCounterHost = selfCounterNetObj.GetComponent<CounterEffectHost>();
+                                if (selectedCounterHost != null) {
+                                    selectedCounterHost.ClearAllCounterEffects();
+                                }
+                            }
+                            break;
                     }
                 }
-                hitAnyTarget = true;
                 break;
         }
     }
@@ -227,7 +248,11 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
             moveDir = Quaternion.Euler(0, Camera.main.transform.eulerAngles.y, 0) * moveDir;
         }
 
-        float moveDistance = moveSpeed * Time.deltaTime;
+        float effectiveSpeed = moveSpeed;
+        if (effectHost != null) {
+            effectiveSpeed *= effectHost.GetMoveSpeedMultiplier();
+        }
+        float moveDistance = effectiveSpeed * Time.deltaTime;
         float playerRadius = .6f;
         bool canMove = !Physics.BoxCast(transform.position, Vector3.one * playerRadius, moveDir, Quaternion.identity, moveDistance, collisionsLayerMask);
 

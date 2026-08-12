@@ -63,7 +63,8 @@ public class SabotageSystem : NetworkBehaviour {
             if (pd.teamId == losingTeam) {
                 Player player = GetPlayerByClientId(pd.clientId);
                 if (player != null) {
-                    int itemIndex = PickCompensationItem(gap);
+                    int itemIndex = CardDealer.PickCompensationCardIndex(
+                        KitchenGameMultiplayer.Instance.GetCardListSO(), GameMode.Multiplayer, gap);
                     if (itemIndex != -1) {
                         player.AddCardClientRpc(itemIndex);
                     }
@@ -72,41 +73,6 @@ public class SabotageSystem : NetworkBehaviour {
         }
 
         teamCompensationCooldown[losingTeam] = COMPENSATION_COOLDOWN;
-    }
-
-    private int PickCompensationItem(int gap) {
-        SabotageItemListSO list = KitchenGameMultiplayer.Instance.GetSabotageItemListSO();
-        if (list == null || list.sabotageItemList.Count == 0) return -1;
-
-        Rarity targetRarity;
-        if (gap <= 2) {
-            targetRarity = Random.value < 0.5f ? Rarity.Common : Rarity.Rare;
-        } else if (gap <= 5) {
-            targetRarity = Rarity.Rare;
-        } else {
-            targetRarity = Rarity.Epic;
-        }
-
-        var candidates = new List<int>();
-        for (int i = 0; i < list.sabotageItemList.Count; i++) {
-            if (list.sabotageItemList[i].rarity == targetRarity) {
-                candidates.Add(i);
-            }
-        }
-
-        if (candidates.Count == 0) {
-            for (int i = 0; i < list.sabotageItemList.Count; i++) {
-                if (list.sabotageItemList[i].rarity == Rarity.Common) {
-                    candidates.Add(i);
-                }
-            }
-        }
-
-        if (candidates.Count == 0) {
-            return Random.Range(0, list.sabotageItemList.Count);
-        }
-
-        return candidates[Random.Range(0, candidates.Count)];
     }
 
     private Player GetPlayerByClientId(ulong clientId) {

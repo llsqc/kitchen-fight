@@ -1,23 +1,7 @@
 using UnityEngine;
 
-public enum EffectType {
-    Stun,
-    ReverseControls,
-    LockCounter,
-    CleanWipe,
-}
-
-public enum Rarity {
-    Common,
-    Rare,
-    Epic,
-}
-
-public enum TargetType {
-    Player,
-    Counter,
-    Self,
-}
+// 枚举已迁移至 CardSO.cs
+// 此文件保留以兼容旧 .asset 文件，新卡牌请使用 CardSO
 
 [CreateAssetMenu(fileName = "SabotageItem", menuName = "KitchenFight/SabotageItem")]
 public class SabotageItemSO : ScriptableObject {

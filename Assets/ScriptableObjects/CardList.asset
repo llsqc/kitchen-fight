@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aac1ef625b285d1449ddc2e16f2064fc, type: 3}
+  m_Name: CardList
+  m_EditorClassIdentifier: 
+  cardList:
+  - {fileID: 11400000, guid: 66c695eaa790fa7438e5be08ea475337, type: 2}
+  - {fileID: 11400000, guid: 2f086aa381fded345a5a44b6c0d3249c, type: 2}
+  - {fileID: 11400000, guid: 70efce84efabc5949a586d2770688d0d, type: 2}
+  - {fileID: 11400000, guid: a73be4b5ff3ea5046ac821850bb6106e, type: 2}
+  - {fileID: 11400000, guid: 47999223c94943c42b3b91f7672f979e, type: 2}
+  - {fileID: 11400000, guid: 201e1b2789d50dd479e38232438da4c7, type: 2}
+  - {fileID: 11400000, guid: 337ef6dd999982646a2ce052ec679542, type: 2}
+  - {fileID: 11400000, guid: 38e075cb402359e499c30a17d1a65938, type: 2}
+  - {fileID: 11400000, guid: 2c6472596fe994d42ae4376bbc1f638d, type: 2}
+  - {fileID: 11400000, guid: c0c09e19624226c48a0063f310c29fde, type: 2}

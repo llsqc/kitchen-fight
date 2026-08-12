@@ -34,7 +34,7 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     public System.Action<EffectCardUI> OnCardDismissed;
 
-    private SabotageItemSO itemSO;
+    private CardSO cardSO;
 
     private bool isHovered;
     private float currentOffset;
@@ -68,36 +68,44 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         Canvas.willRenderCanvases -= OnWillRenderCanvases;
     }
 
-    public void SetCardData(int id, int itemIndex, SabotageItemSO itemSO) {
+    public void SetCardData(int id, int itemIndex, CardSO cardSO) {
         CardId = id;
         ItemIndex = itemIndex;
-        this.itemSO = itemSO;
-        TargetType = itemSO.targetType;
+        this.cardSO = cardSO;
+        TargetType = cardSO.targetType;
 
-        if (nameText != null) nameText.text = itemSO.itemName;
+        if (nameText != null) nameText.text = cardSO.cardName;
         if (descriptionText != null) {
-            descriptionText.text = GenerateDescription(itemSO);
+            descriptionText.text = !string.IsNullOrEmpty(cardSO.description)
+                ? cardSO.description
+                : GenerateDescription(cardSO);
         }
         if (iconImage != null) {
-            iconImage.sprite = itemSO.icon;
-            iconImage.color = itemSO.icon != null ? Color.white : new Color(1f, 0.8f, 0.2f, 0.8f);
+            if (cardSO.icon != null) {
+                iconImage.sprite = cardSO.icon;
+                iconImage.color = Color.white;
+            } else {
+                iconImage.sprite = null;
+                iconImage.color = cardSO.placeholderColor;
+            }
         }
 
-        ApplyRarityVisual(itemSO.rarity);
+        ApplyRarityVisual(cardSO.rarity);
     }
 
-    private string GenerateDescription(SabotageItemSO item) {
-        string target = item.targetType switch {
+    private string GenerateDescription(CardSO card) {
+        string target = card.targetType switch {
             TargetType.Player => "对目标玩家",
             TargetType.Counter => "对目标台面",
             TargetType.Self => "净化自身",
+            TargetType.Teammate => "对队友",
             _ => string.Empty,
         };
-        string effect = item.effectType switch {
-            EffectType.Stun => $"眩晕 {item.duration:F0}秒",
-            EffectType.ReverseControls => $"反向操作 {item.duration:F0}秒",
-            EffectType.LockCounter => $"锁定 {item.duration:F0}秒",
-            EffectType.CleanWipe => "清除所有效果",
+        string effect = card.effectType switch {
+            EffectType.Stun => $"眩晕 {card.duration:F0}秒",
+            EffectType.ReverseControls => $"反向操作 {card.duration:F0}秒",
+            EffectType.LockCounter => $"锁定 {card.duration:F0}秒",
+            EffectType.CleanWipe or EffectType.SelfClean => "清除所有效果",
             _ => string.Empty,
         };
         return $"{target}{effect}";
@@ -126,8 +134,8 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
             itemIndex = ItemIndex,
             name = nameText != null ? nameText.text : string.Empty,
             description = descriptionText != null ? descriptionText.text : string.Empty,
-            effectType = itemSO != null ? itemSO.effectType : default,
-            rarity = itemSO != null ? itemSO.rarity : default,
+            effectType = cardSO != null ? cardSO.effectType : default,
+            rarity = cardSO != null ? cardSO.rarity : default,
             targetType = TargetType,
         };
     }

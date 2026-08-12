@@ -162,7 +162,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -1832,7 +1832,7 @@ MonoBehaviour:
   - colors:
     - {r: 0.27, g: 0.27, b: 1, a: 1}
     - {r: 0.13, g: 0.13, b: 0.8, a: 1}
-  sabotageItemListSO: {fileID: 11400000, guid: c39defd619e4e154bb998e84e2861d24, type: 2}
+  cardListSO: {fileID: 11400000, guid: 9eb18559dcffc494e9723b86b32756aa, type: 2}
 --- !u!4 &753559515
 Transform:
   m_ObjectHideFlags: 0

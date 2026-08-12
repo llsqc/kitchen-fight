@@ -30,7 +30,7 @@ public class KitchenGameMultiplayer : NetworkBehaviour {
     [SerializeField] private KitchenObjectListSO kitchenObjectListSO;
     [SerializeField] private List<Color> playerColorList;
     [SerializeField] private TeamColorSet[] teamColorSets;
-    [SerializeField] private SabotageItemListSO sabotageItemListSO;
+    [SerializeField] private CardListSO cardListSO;
 
 
     private NetworkList<PlayerData> playerDataNetworkList;
@@ -333,16 +333,16 @@ public class KitchenGameMultiplayer : NetworkBehaviour {
         return GetPlayerDataFromClientId(clientId).teamId;
     }
 
-    public SabotageItemListSO GetSabotageItemListSO() {
-        return sabotageItemListSO;
+    public CardListSO GetCardListSO() {
+        return cardListSO;
     }
 
-    public int GetSabotageItemIndex(SabotageItemSO item) {
-        return sabotageItemListSO.GetIndex(item);
+    public int GetCardIndex(CardSO card) {
+        return cardListSO.GetIndex(card);
     }
 
-    public SabotageItemSO GetSabotageItemFromIndex(int index) {
-        return sabotageItemListSO.GetFromIndex(index);
+    public CardSO GetCardFromIndex(int index) {
+        return cardListSO.GetFromIndex(index);
     }
 
     public void ChangePlayerColor(int colorId) {

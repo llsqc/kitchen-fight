@@ -32,6 +32,7 @@ public class StoveCounter : BaseCounter, IHasProgress {
     private FryingRecipeSO fryingRecipeSO;
     private NetworkVariable<float> burningTimer = new NetworkVariable<float>(0f);
     private BurningRecipeSO burningRecipeSO;
+    private NetworkVariable<ulong> lastInteractorClientId = new NetworkVariable<ulong>(ulong.MaxValue);
 
 
     public override void OnNetworkSpawn() {
@@ -72,11 +73,13 @@ public class StoveCounter : BaseCounter, IHasProgress {
         }
 
         if (HasKitchenObject()) {
+            float speedMultiplier = GetInteractionSpeedMultiplier();
+
             switch (state.Value) {
                 case State.Idle:
                     break;
                 case State.Frying:
-                    fryingTimer.Value += Time.deltaTime;
+                    fryingTimer.Value += Time.deltaTime * speedMultiplier;
 
                     if (fryingTimer.Value > fryingRecipeSO.fryingTimerMax) {
                         // Fried
@@ -92,7 +95,7 @@ public class StoveCounter : BaseCounter, IHasProgress {
                     }
                     break;
                 case State.Fried:
-                    burningTimer.Value += Time.deltaTime;
+                    burningTimer.Value += Time.deltaTime * speedMultiplier;
 
                     if (burningTimer.Value > burningRecipeSO.burningTimerMax) {
                         // Fried
@@ -111,6 +114,8 @@ public class StoveCounter : BaseCounter, IHasProgress {
     }
 
     public override void Interact(Player player) {
+        lastInteractorClientId.Value = player.OwnerClientId;
+
         if (!HasKitchenObject()) {
             // There is no KitchenObject here
             if (player.HasKitchenObject()) {
@@ -209,6 +214,39 @@ public class StoveCounter : BaseCounter, IHasProgress {
 
     public bool IsFried() {
         return state.Value == State.Fried;
+    }
+
+    private float GetInteractionSpeedMultiplier() {
+        if (lastInteractorClientId.Value == ulong.MaxValue) return 1f;
+        foreach (var player in FindObjectsByType<Player>(FindObjectsSortMode.None)) {
+            if (player.OwnerClientId == lastInteractorClientId.Value) {
+                var host = player.GetComponent<PlayerEffectHost>();
+                if (host != null) return host.GetInteractionSpeedMultiplier();
+            }
+        }
+        return 1f;
+    }
+
+    public void InstantComplete() {
+        if (!IsServer) return;
+        if (!HasKitchenObject()) return;
+
+        switch (state.Value) {
+            case State.Frying:
+                KitchenObject.DestroyKitchenObject(GetKitchenObject());
+                KitchenObject.SpawnKitchenObject(fryingRecipeSO.output, this);
+                state.Value = State.Fried;
+                burningTimer.Value = 0f;
+                SetBurningRecipeSOClientRpc(
+                    KitchenGameMultiplayer.Instance.GetKitchenObjectSOIndex(GetKitchenObject().GetKitchenObjectSO())
+                );
+                break;
+            case State.Fried:
+                KitchenObject.DestroyKitchenObject(GetKitchenObject());
+                KitchenObject.SpawnKitchenObject(burningRecipeSO.output, this);
+                state.Value = State.Burned;
+                break;
+        }
     }
 
 }

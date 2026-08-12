@@ -128,7 +128,20 @@ public class DeliveryManager : NetworkBehaviour {
 
     [ServerRpc(RequireOwnership = false)]
     private void DeliverCorrectRecipeServerRpc(int teamId, int waitingRecipeSOListIndex, Vector3 deliveryPosition) {
-        GetTeamScoreNetworkVariable(teamId).Value++;
+        int scoreToAdd = 1;
+
+        // 检查该队伍是否有玩家持有 DoubleScore Buff
+        foreach (var player in FindObjectsByType<Player>(FindObjectsSortMode.None)) {
+            if (KitchenGameMultiplayer.Instance.GetTeamIdFromClientId(player.OwnerClientId) == teamId) {
+                var host = player.GetComponent<PlayerEffectHost>();
+                if (host != null && host.HasDoubleScore()) {
+                    scoreToAdd = Mathf.RoundToInt(scoreToAdd * host.GetDoubleScoreMultiplier());
+                    break;
+                }
+            }
+        }
+
+        GetTeamScoreNetworkVariable(teamId).Value += scoreToAdd;
         DeliverCorrectRecipeClientRpc(teamId, waitingRecipeSOListIndex, deliveryPosition);
     }
 

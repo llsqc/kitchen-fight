@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:yousandi.cn,2023:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 638de02de64325247a22de032a2a4d08, type: 3}
+  m_Name: "\u65F6\u95F4\u5EF6\u957F"
+  m_EditorClassIdentifier: 
+  cardName: "\u65F6\u95F4\u5EF6\u957F"
+  description: "\u5EF6\u957F\u6E38\u620F\u65F6\u95F415\u79D2"
+  icon: {fileID: 0}
+  placeholderColor: {r: 0.9, g: 0.8, b: 0.2, a: 1}
+  gameMode: 0
+  cardCategory: 0
+  rarity: 1
+  effectType: 3
+  targetType: 0
+  duration: 0
+  magnitude: 15

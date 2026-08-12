@@ -19,17 +19,18 @@ public class TogglePanelUI : MonoBehaviour {
     [SerializeField] private float shownY = -40f;
     [SerializeField] private float backgroundAlpha = 0.5f;
     [SerializeField] private Button testAddCardButton;
-    [SerializeField] private SabotageItemListSO sabotageItemListSO;
+    [SerializeField] private CardListSO cardListSO;
 
     private bool isVisible;
     private Coroutine animateCoroutine;
     private int nextCardId = 1;
+    private GameMode currentGameMode = GameMode.Single;
 
     private void Awake() {
         Instance = this;
 
         testAddCardButton.onClick.AddListener(() => {
-            int itemIndex = PickRandomItemIndex();
+            int itemIndex = CardDealer.PickRandomCardIndex(cardListSO, currentGameMode);
             if (itemIndex != -1) {
                 AddCard(itemIndex);
             }
@@ -62,7 +63,7 @@ public class TogglePanelUI : MonoBehaviour {
         Player.LocalInstance.OnCardAdded += Player_OnCardAdded;
 
         for (int i = 0; i < cardCount; i++) {
-            int itemIndex = PickRandomItemIndex();
+            int itemIndex = CardDealer.PickRandomCardIndex(cardListSO, currentGameMode);
             if (itemIndex != -1) {
                 AddCard(itemIndex);
             }
@@ -99,40 +100,37 @@ public class TogglePanelUI : MonoBehaviour {
     }
 
     public EffectCardUI AddCard(int itemIndex) {
-        if (sabotageItemListSO == null) return null;
-        SabotageItemSO itemSO = sabotageItemListSO.GetFromIndex(itemIndex);
-        if (itemSO == null) return null;
+        if (cardListSO == null) return null;
+        CardSO card = cardListSO.GetFromIndex(itemIndex);
+        if (card == null) return null;
 
         GameObject cardGo = Instantiate(cardPrefab, cardContainer);
-        EffectCardUI card = cardGo.GetComponent<EffectCardUI>();
-        card.SetCardData(nextCardId++, itemIndex, itemSO);
-        card.OnCardDismissed = HandleCardDismissed;
-        return card;
+        EffectCardUI cardUI = cardGo.GetComponent<EffectCardUI>();
+        cardUI.SetCardData(nextCardId++, itemIndex, card);
+        cardUI.OnCardDismissed = HandleCardDismissed;
+        return cardUI;
     }
 
-    private void HandleCardDismissed(EffectCardUI card) {
+    private void HandleCardDismissed(EffectCardUI dismissedCard) {
         if (Player.LocalInstance == null) return;
 
-        SabotageItemSO item = sabotageItemListSO.GetFromIndex(card.ItemIndex);
-        if (item == null) return;
+        CardSO card = cardListSO.GetFromIndex(dismissedCard.ItemIndex);
+        if (card == null) return;
 
         Vector3 aimPosition = Vector3.zero;
         Unity.Netcode.NetworkObjectReference counterRef = default;
 
-        switch (item.targetType) {
+        switch (card.targetType) {
             case TargetType.Player:
                 aimPosition = GameInput.Instance.GetMouseWorldPosition();
                 break;
             case TargetType.Counter:
-                // Will be handled by server if a counter is selected
-                counterRef = Player.LocalInstance.GetSelectedCounterRef();
-                break;
             case TargetType.Self:
                 counterRef = Player.LocalInstance.GetSelectedCounterRef();
                 break;
         }
 
-        Player.LocalInstance.UseCardServerRpc(card.ItemIndex, aimPosition, counterRef);
+        Player.LocalInstance.UseCardServerRpc(dismissedCard.ItemIndex, aimPosition, counterRef);
     }
 
     public bool HasPlayerTargetCard() {
@@ -163,29 +161,8 @@ public class TogglePanelUI : MonoBehaviour {
         return default;
     }
 
-    private int PickRandomItemIndex() {
-        if (sabotageItemListSO == null || sabotageItemListSO.sabotageItemList.Count == 0) return -1;
-
-        float roll = Random.value;
-        Rarity targetRarity = roll < 0.6f ? Rarity.Common : (roll < 0.9f ? Rarity.Rare : Rarity.Epic);
-
-        var candidates = new List<int>();
-        for (int i = 0; i < sabotageItemListSO.sabotageItemList.Count; i++) {
-            if (sabotageItemListSO.sabotageItemList[i].rarity == targetRarity) {
-                candidates.Add(i);
-            }
-        }
-        if (candidates.Count == 0) {
-            for (int i = 0; i < sabotageItemListSO.sabotageItemList.Count; i++) {
-                if (sabotageItemListSO.sabotageItemList[i].rarity == Rarity.Common) {
-                    candidates.Add(i);
-                }
-            }
-        }
-        if (candidates.Count == 0) {
-            return Random.Range(0, sabotageItemListSO.sabotageItemList.Count);
-        }
-        return candidates[Random.Range(0, candidates.Count)];
+    public void SetGameMode(GameMode mode) {
+        currentGameMode = mode;
     }
 
     private void Show() {
