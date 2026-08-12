@@ -63,12 +63,9 @@ public class SabotageSystem : NetworkBehaviour {
             if (pd.teamId == losingTeam) {
                 Player player = GetPlayerByClientId(pd.clientId);
                 if (player != null) {
-                    int emptySlot = player.GetEmptySlot();
-                    if (emptySlot != -1) {
-                        int itemIndex = PickCompensationItem(gap);
-                        if (itemIndex != -1) {
-                            player.SetItemSlot(emptySlot, itemIndex);
-                        }
+                    int itemIndex = PickCompensationItem(gap);
+                    if (itemIndex != -1) {
+                        player.AddCardClientRpc(itemIndex);
                     }
                 }
             }

@@ -23,7 +23,18 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     [Header("Drag Settings")]
     [SerializeField] private float dragThreshold = 100f;
 
+    [Header("Rarity Colors")]
+    [SerializeField] private Color commonColor = new Color(0.7f, 0.7f, 0.7f, 1f);
+    [SerializeField] private Color rareColor = new Color(0.2f, 0.5f, 1f, 1f);
+    [SerializeField] private Color epicColor = new Color(0.8f, 0.3f, 0.9f, 1f);
+
     public int CardId { get; private set; }
+    public int ItemIndex { get; private set; } = -1;
+    public TargetType TargetType { get; private set; }
+
+    public System.Action<EffectCardUI> OnCardDismissed;
+
+    private SabotageItemSO itemSO;
 
     private bool isHovered;
     private float currentOffset;
@@ -57,15 +68,67 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         Canvas.willRenderCanvases -= OnWillRenderCanvases;
     }
 
-    public void SetCardId(int id) {
+    public void SetCardData(int id, int itemIndex, SabotageItemSO itemSO) {
         CardId = id;
+        ItemIndex = itemIndex;
+        this.itemSO = itemSO;
+        TargetType = itemSO.targetType;
+
+        if (nameText != null) nameText.text = itemSO.itemName;
+        if (descriptionText != null) {
+            descriptionText.text = GenerateDescription(itemSO);
+        }
+        if (iconImage != null) {
+            iconImage.sprite = itemSO.icon;
+            iconImage.color = itemSO.icon != null ? Color.white : new Color(1f, 0.8f, 0.2f, 0.8f);
+        }
+
+        ApplyRarityVisual(itemSO.rarity);
+    }
+
+    private string GenerateDescription(SabotageItemSO item) {
+        string target = item.targetType switch {
+            TargetType.Player => "对目标玩家",
+            TargetType.Counter => "对目标台面",
+            TargetType.Self => "净化自身",
+            _ => string.Empty,
+        };
+        string effect = item.effectType switch {
+            EffectType.Stun => $"眩晕 {item.duration:F0}秒",
+            EffectType.ReverseControls => $"反向操作 {item.duration:F0}秒",
+            EffectType.LockCounter => $"锁定 {item.duration:F0}秒",
+            EffectType.CleanWipe => "清除所有效果",
+            _ => string.Empty,
+        };
+        return $"{target}{effect}";
+    }
+
+    private void ApplyRarityVisual(Rarity rarity) {
+        Color color = rarity switch {
+            Rarity.Common => commonColor,
+            Rarity.Rare => rareColor,
+            Rarity.Epic => epicColor,
+            _ => commonColor,
+        };
+        if (backgroundImage != null) backgroundImage.color = color;
+        if (rarityGem != null) rarityGem.color = color;
+
+        graphics = GetComponentsInChildren<Graphic>(true);
+        originalColors = new Color[graphics.Length];
+        for (int i = 0; i < graphics.Length; i++) {
+            originalColors[i] = graphics[i].color;
+        }
     }
 
     public CardInfo GetCardInfo() {
         return new CardInfo {
             cardId = CardId,
+            itemIndex = ItemIndex,
             name = nameText != null ? nameText.text : string.Empty,
             description = descriptionText != null ? descriptionText.text : string.Empty,
+            effectType = itemSO != null ? itemSO.effectType : default,
+            rarity = itemSO != null ? itemSO.rarity : default,
+            targetType = TargetType,
         };
     }
 
@@ -105,6 +168,7 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         float upDistance = transform.localPosition.y - dragStartLocalPos.y;
 
         if (upDistance >= dragThreshold) {
+            OnCardDismissed?.Invoke(this);
             Destroy(gameObject);
         } else {
             var le = GetComponent<LayoutElement>();

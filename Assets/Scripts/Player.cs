@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class Player : NetworkBehaviour, IKitchenObjectParent {
 
@@ -47,6 +48,8 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
     private const float PLAYER_TARGET_RADIUS = 1.5f;
     private int selectedSlot = 0;
     private LayerMask playerLayerMask;
+
+    public event UnityAction<int> OnCardAdded;
 
 
     private void Start() {
@@ -234,6 +237,62 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
         }
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    public void UseCardServerRpc(int itemIndex, Vector3 aimPosition, NetworkObjectReference counterRef) {
+        SabotageItemSO item = KitchenGameMultiplayer.Instance.GetSabotageItemFromIndex(itemIndex);
+        if (item == null) return;
+
+        int myTeamId = KitchenGameMultiplayer.Instance.GetTeamIdFromClientId(OwnerClientId);
+        ExecuteItemEffect(item, aimPosition, counterRef, myTeamId);
+    }
+
+    [ClientRpc]
+    public void AddCardClientRpc(int itemIndex, ClientRpcParams rpcParams = default) {
+        OnCardAdded?.Invoke(itemIndex);
+    }
+
+    private void ExecuteItemEffect(SabotageItemSO item, Vector3 aimPosition, NetworkObjectReference counterRef, int myTeamId) {
+        bool hitAnyTarget = false;
+
+        switch (item.targetType) {
+            case TargetType.Player:
+                Collider[] hits = Physics.OverlapSphere(aimPosition, PLAYER_TARGET_RADIUS, playerLayerMask);
+                foreach (var hit in hits) {
+                    Player targetPlayer = hit.GetComponent<Player>();
+                    if (targetPlayer == null || targetPlayer == this) continue;
+                    var playerHost = targetPlayer.GetComponent<PlayerEffectHost>();
+                    if (playerHost != null) {
+                        playerHost.ApplyEffect(item.effectType, item.duration, myTeamId);
+                        hitAnyTarget = true;
+                    }
+                }
+                break;
+            case TargetType.Counter:
+                if (counterRef.TryGet(out NetworkObject counterNetObj)) {
+                    var counterHost = counterNetObj.GetComponent<CounterEffectHost>();
+                    if (counterHost != null) {
+                        counterHost.ApplyEffect(item.effectType, item.duration, myTeamId);
+                        hitAnyTarget = true;
+                    }
+                }
+                break;
+            case TargetType.Self:
+                var selfHost = GetComponent<PlayerEffectHost>();
+                if (selfHost != null) {
+                    selfHost.ClearAllPlayerEffects();
+                    selfHost.TriggerCleanWipeFlash();
+                }
+                if (counterRef.TryGet(out NetworkObject selfCounterNetObj)) {
+                    var selectedCounterHost = selfCounterNetObj.GetComponent<CounterEffectHost>();
+                    if (selectedCounterHost != null) {
+                        selectedCounterHost.ClearAllCounterEffects();
+                    }
+                }
+                hitAnyTarget = true;
+                break;
+        }
+    }
+
     private bool IsStunned() {
         return effectHost != null && effectHost.GetEffectRemaining(EffectType.Stun) > 0f;
     }
@@ -412,6 +471,13 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
 
     public int GetItemSlot(int slot) {
         return slot == 0 ? itemSlot0.Value : itemSlot1.Value;
+    }
+
+    public Unity.Netcode.NetworkObjectReference GetSelectedCounterRef() {
+        if (selectedCounter != null) {
+            return selectedCounter.GetNetworkObject();
+        }
+        return default;
     }
 
 }

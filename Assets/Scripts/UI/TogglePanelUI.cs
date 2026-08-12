@@ -19,6 +19,7 @@ public class TogglePanelUI : MonoBehaviour {
     [SerializeField] private float shownY = -40f;
     [SerializeField] private float backgroundAlpha = 0.5f;
     [SerializeField] private Button testAddCardButton;
+    [SerializeField] private SabotageItemListSO sabotageItemListSO;
 
     private bool isVisible;
     private Coroutine animateCoroutine;
@@ -28,16 +29,20 @@ public class TogglePanelUI : MonoBehaviour {
         Instance = this;
 
         testAddCardButton.onClick.AddListener(() => {
-            AddCard();
+            int itemIndex = PickRandomItemIndex();
+            if (itemIndex != -1) {
+                AddCard(itemIndex);
+            }
         });
     }
 
     private void Start() {
         KitchenGameManager.Instance.OnLocalGamePaused += KitchenGameManager_OnLocalGamePaused;
 
-        for (int i = 0; i < cardCount; i++) {
-            AddCard();
+        if (Player.LocalInstance != null) {
+            Player_OnSpawned();
         }
+        Player.OnAnyPlayerSpawned += Player_OnAnyPlayerSpawned;
 
         cardContainer.anchoredPosition = new Vector2(0, hiddenY);
         backgroundImage.color = new Color(0, 0, 0, 0f);
@@ -47,9 +52,33 @@ public class TogglePanelUI : MonoBehaviour {
         isVisible = false;
     }
 
+    private void Player_OnAnyPlayerSpawned(object sender, System.EventArgs e) {
+        if (Player.LocalInstance != null) {
+            Player_OnSpawned();
+        }
+    }
+
+    private void Player_OnSpawned() {
+        Player.LocalInstance.OnCardAdded += Player_OnCardAdded;
+
+        for (int i = 0; i < cardCount; i++) {
+            int itemIndex = PickRandomItemIndex();
+            if (itemIndex != -1) {
+                AddCard(itemIndex);
+            }
+        }
+    }
+
+    private void Player_OnCardAdded(int itemIndex) {
+        AddCard(itemIndex);
+    }
+
     private void OnDestroy() {
         if (KitchenGameManager.Instance != null) {
             KitchenGameManager.Instance.OnLocalGamePaused -= KitchenGameManager_OnLocalGamePaused;
+        }
+        if (Player.LocalInstance != null) {
+            Player.LocalInstance.OnCardAdded -= Player_OnCardAdded;
         }
     }
 
@@ -69,11 +98,50 @@ public class TogglePanelUI : MonoBehaviour {
         }
     }
 
-    public EffectCardUI AddCard() {
+    public EffectCardUI AddCard(int itemIndex) {
+        if (sabotageItemListSO == null) return null;
+        SabotageItemSO itemSO = sabotageItemListSO.GetFromIndex(itemIndex);
+        if (itemSO == null) return null;
+
         GameObject cardGo = Instantiate(cardPrefab, cardContainer);
         EffectCardUI card = cardGo.GetComponent<EffectCardUI>();
-        card.SetCardId(nextCardId++);
+        card.SetCardData(nextCardId++, itemIndex, itemSO);
+        card.OnCardDismissed = HandleCardDismissed;
         return card;
+    }
+
+    private void HandleCardDismissed(EffectCardUI card) {
+        if (Player.LocalInstance == null) return;
+
+        SabotageItemSO item = sabotageItemListSO.GetFromIndex(card.ItemIndex);
+        if (item == null) return;
+
+        Vector3 aimPosition = Vector3.zero;
+        Unity.Netcode.NetworkObjectReference counterRef = default;
+
+        switch (item.targetType) {
+            case TargetType.Player:
+                aimPosition = GameInput.Instance.GetMouseWorldPosition();
+                break;
+            case TargetType.Counter:
+                // Will be handled by server if a counter is selected
+                counterRef = Player.LocalInstance.GetSelectedCounterRef();
+                break;
+            case TargetType.Self:
+                counterRef = Player.LocalInstance.GetSelectedCounterRef();
+                break;
+        }
+
+        Player.LocalInstance.UseCardServerRpc(card.ItemIndex, aimPosition, counterRef);
+    }
+
+    public bool HasPlayerTargetCard() {
+        foreach (Transform child in cardContainer) {
+            if (child.TryGetComponent(out EffectCardUI card)) {
+                if (card.TargetType == TargetType.Player) return true;
+            }
+        }
+        return false;
     }
 
     public List<CardInfo> GetAllCardInfos() {
@@ -93,6 +161,31 @@ public class TogglePanelUI : MonoBehaviour {
             }
         }
         return default;
+    }
+
+    private int PickRandomItemIndex() {
+        if (sabotageItemListSO == null || sabotageItemListSO.sabotageItemList.Count == 0) return -1;
+
+        float roll = Random.value;
+        Rarity targetRarity = roll < 0.6f ? Rarity.Common : (roll < 0.9f ? Rarity.Rare : Rarity.Epic);
+
+        var candidates = new List<int>();
+        for (int i = 0; i < sabotageItemListSO.sabotageItemList.Count; i++) {
+            if (sabotageItemListSO.sabotageItemList[i].rarity == targetRarity) {
+                candidates.Add(i);
+            }
+        }
+        if (candidates.Count == 0) {
+            for (int i = 0; i < sabotageItemListSO.sabotageItemList.Count; i++) {
+                if (sabotageItemListSO.sabotageItemList[i].rarity == Rarity.Common) {
+                    candidates.Add(i);
+                }
+            }
+        }
+        if (candidates.Count == 0) {
+            return Random.Range(0, sabotageItemListSO.sabotageItemList.Count);
+        }
+        return candidates[Random.Range(0, candidates.Count)];
     }
 
     private void Show() {

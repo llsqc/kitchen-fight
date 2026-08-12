@@ -71,7 +71,7 @@ public class CrosshairUI : MonoBehaviour {
             return;
         }
 
-        if (!Player.LocalInstance.HasPlayerTargetItemSelected()) {
+        if (!TogglePanelUI.Instance.HasPlayerTargetCard()) {
             SetVisible(false);
             return;
         }

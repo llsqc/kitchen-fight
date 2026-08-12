@@ -37,13 +37,10 @@ public class ItemBoxCounter : BaseCounter {
         if (!playerRef.TryGet(out NetworkObject playerNetObj)) return;
         Player player = playerNetObj.GetComponent<Player>();
 
-        int emptySlot = player.GetEmptySlot();
-        if (emptySlot == -1) return; // Inventory full
-
         int itemIndex = PickRandomItemIndex();
         if (itemIndex == -1) return;
 
-        player.SetItemSlot(emptySlot, itemIndex);
+        player.AddCardClientRpc(itemIndex);
         cooldownTimer.Value = COOLDOWN_MAX;
     }
 
