@@ -1,3 +1,7 @@
+// ItemBoxCounter has been replaced by the card system.
+// Item distribution now goes through Player.AddCardClientRpc.
+// This file is kept for reference but the class is disabled.
+/*
 using Unity.Netcode;
 using UnityEngine;
 
@@ -84,3 +88,4 @@ public class ItemBoxCounter : BaseCounter {
     }
 
 }
+*/

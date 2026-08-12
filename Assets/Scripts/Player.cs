@@ -42,11 +42,7 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
     private KitchenObject kitchenObject;
     private PlayerEffectHost effectHost;
 
-    private NetworkVariable<int> itemSlot0 = new NetworkVariable<int>(-1);
-    private NetworkVariable<int> itemSlot1 = new NetworkVariable<int>(-1);
-
     private const float PLAYER_TARGET_RADIUS = 1.5f;
-    private int selectedSlot = 0;
     private LayerMask playerLayerMask;
 
     public event UnityAction<int> OnCardAdded;
@@ -55,9 +51,6 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
     private void Start() {
         GameInput.Instance.OnInteractAction += GameInput_OnInteractAction;
         GameInput.Instance.OnInteractAlternateAction += GameInput_OnInteractAlternateAction;
-        GameInput.Instance.OnUseItemAction += GameInput_OnUseItemAction;
-        GameInput.Instance.OnSelectSlot1Action += GameInput_OnSelectSlot1;
-        GameInput.Instance.OnSelectSlot2Action += GameInput_OnSelectSlot2;
 
         effectHost = GetComponent<PlayerEffectHost>();
         playerLayerMask = LayerMask.GetMask("Players");
@@ -69,11 +62,6 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
     }
 
     public override void OnDestroy() {
-        if (GameInput.Instance != null) {
-            GameInput.Instance.OnUseItemAction -= GameInput_OnUseItemAction;
-            GameInput.Instance.OnSelectSlot1Action -= GameInput_OnSelectSlot1;
-            GameInput.Instance.OnSelectSlot2Action -= GameInput_OnSelectSlot2;
-        }
     }
 
     public override void OnNetworkSpawn() {
@@ -113,127 +101,6 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
 
         if (selectedCounter != null && !IsCounterLocked(selectedCounter)) {
             selectedCounter.Interact(this);
-        }
-    }
-
-    private void GameInput_OnSelectSlot1(object sender, EventArgs e) {
-        if (!KitchenGameManager.Instance.IsGamePlaying()) return;
-        if (IsStunned()) return;
-
-        HandleSlotSelect(0);
-    }
-
-    private void GameInput_OnSelectSlot2(object sender, EventArgs e) {
-        if (!KitchenGameManager.Instance.IsGamePlaying()) return;
-        if (IsStunned()) return;
-
-        HandleSlotSelect(1);
-    }
-
-    private void HandleSlotSelect(int slotIndex) {
-        int itemIndex = slotIndex == 0 ? itemSlot0.Value : itemSlot1.Value;
-        if (itemIndex == -1) {
-            SoundManager.Instance.PlayWarningSound(transform.position);
-            return;
-        }
-
-        SabotageItemSO item = KitchenGameMultiplayer.Instance.GetSabotageItemFromIndex(itemIndex);
-        if (item == null) return;
-
-        if (item.targetType == TargetType.Player) {
-            selectedSlot = slotIndex;
-        } else {
-            // Counter/Self: use immediately
-            NetworkObjectReference counterRef = default;
-            if (selectedCounter != null) {
-                counterRef = selectedCounter.GetNetworkObject();
-            }
-
-            if (item.targetType == TargetType.Counter && selectedCounter == null) {
-                SoundManager.Instance.PlayWarningSound(transform.position);
-                return;
-            }
-
-            UseItemServerRpc(slotIndex, Vector3.zero, counterRef);
-        }
-    }
-
-    private void GameInput_OnUseItemAction(object sender, EventArgs e) {
-        if (!KitchenGameManager.Instance.IsGamePlaying()) return;
-        if (IsStunned()) return;
-
-        int itemIndex = selectedSlot == 0 ? itemSlot0.Value : itemSlot1.Value;
-        if (itemIndex == -1) {
-            SoundManager.Instance.PlayWarningSound(transform.position);
-            return;
-        }
-
-        SabotageItemSO item = KitchenGameMultiplayer.Instance.GetSabotageItemFromIndex(itemIndex);
-        if (item == null) return;
-
-        if (item.targetType != TargetType.Player) return;
-
-        Vector3 aimPos = GameInput.Instance.GetMouseWorldPosition();
-        UseItemServerRpc(selectedSlot, aimPos, default);
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    private void UseItemServerRpc(int slotIndex, Vector3 aimPosition, NetworkObjectReference counterRef) {
-        int itemIndex = slotIndex == 0 ? itemSlot0.Value : itemSlot1.Value;
-        if (itemIndex == -1) return;
-
-        SabotageItemSO item = KitchenGameMultiplayer.Instance.GetSabotageItemFromIndex(itemIndex);
-        if (item == null) return;
-
-        int myTeamId = KitchenGameMultiplayer.Instance.GetTeamIdFromClientId(OwnerClientId);
-        bool hitAnyTarget = false;
-
-        switch (item.targetType) {
-            case TargetType.Player:
-                Collider[] hits = Physics.OverlapSphere(aimPosition, PLAYER_TARGET_RADIUS, playerLayerMask);
-                foreach (var hit in hits) {
-                    Player targetPlayer = hit.GetComponent<Player>();
-                    if (targetPlayer == null || targetPlayer == this) continue;
-                    var playerHost = targetPlayer.GetComponent<PlayerEffectHost>();
-                    if (playerHost != null) {
-                        playerHost.ApplyEffect(item.effectType, item.duration, myTeamId);
-                        hitAnyTarget = true;
-                    }
-                }
-                break;
-            case TargetType.Counter:
-                if (!counterRef.TryGet(out NetworkObject counterNetObj)) return;
-                BaseCounter targetCounter = counterNetObj.GetComponent<BaseCounter>();
-                if (targetCounter == null) return;
-                var counterHost = targetCounter.GetComponent<CounterEffectHost>();
-                if (counterHost != null) {
-                    counterHost.ApplyEffect(item.effectType, item.duration, myTeamId);
-                    hitAnyTarget = true;
-                }
-                break;
-            case TargetType.Self:
-                var selfHost = GetComponent<PlayerEffectHost>();
-                if (selfHost != null) {
-                    selfHost.ClearAllPlayerEffects();
-                    selfHost.TriggerCleanWipeFlash();
-                }
-                if (counterRef.TryGet(out NetworkObject selfCounterNetObj)) {
-                    var selectedCounterHost = selfCounterNetObj.GetComponent<CounterEffectHost>();
-                    if (selectedCounterHost != null) {
-                        selectedCounterHost.ClearAllCounterEffects();
-                    }
-                }
-                hitAnyTarget = true;
-                break;
-        }
-
-        if (!hitAnyTarget) return;
-
-        // Remove item from inventory
-        if (slotIndex == 0) {
-            itemSlot0.Value = -1;
-        } else {
-            itemSlot1.Value = -1;
         }
     }
 
@@ -318,21 +185,6 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
 
     public bool IsWalking() {
         return isWalking;
-    }
-
-    public int GetSelectedSlot() {
-        return selectedSlot;
-    }
-
-    public int GetSelectedItemIndex() {
-        return selectedSlot == 0 ? itemSlot0.Value : itemSlot1.Value;
-    }
-
-    public bool HasPlayerTargetItemSelected() {
-        int itemIndex = GetSelectedItemIndex();
-        if (itemIndex == -1) return false;
-        SabotageItemSO item = KitchenGameMultiplayer.Instance.GetSabotageItemFromIndex(itemIndex);
-        return item != null && item.targetType == TargetType.Player;
     }
 
     private void HandleInteractions() {
@@ -453,25 +305,6 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
         return NetworkObject;
     }
 
-
-    public int GetEmptySlot() {
-        if (itemSlot0.Value == -1) return 0;
-        if (itemSlot1.Value == -1) return 1;
-        return -1;
-    }
-
-    public void SetItemSlot(int slot, int itemIndex) {
-        if (!IsServer) return;
-        if (slot == 0) {
-            itemSlot0.Value = itemIndex;
-        } else if (slot == 1) {
-            itemSlot1.Value = itemIndex;
-        }
-    }
-
-    public int GetItemSlot(int slot) {
-        return slot == 0 ? itemSlot0.Value : itemSlot1.Value;
-    }
 
     public Unity.Netcode.NetworkObjectReference GetSelectedCounterRef() {
         if (selectedCounter != null) {

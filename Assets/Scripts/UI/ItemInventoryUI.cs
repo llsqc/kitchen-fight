@@ -1,3 +1,6 @@
+// ItemInventoryUI has been replaced by the card system (TogglePanelUI + EffectCardUI).
+// This file is kept for reference but the class is disabled.
+/*
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -91,3 +94,4 @@ public class ItemInventoryUI : MonoBehaviour {
 
 
 }
+*/

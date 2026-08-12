@@ -1,3 +1,6 @@
+// ItemBoxCounterVisual depends on ItemBoxCounter which has been disabled.
+// This file is kept for reference but the class is disabled.
+/*
 using TMPro;
 using UnityEngine;
 
@@ -64,3 +67,4 @@ public class ItemBoxCounterVisual : MonoBehaviour {
 
 
 }
+*/
