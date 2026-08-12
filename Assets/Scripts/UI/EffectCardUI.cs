@@ -94,10 +94,12 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     }
 
     private string GenerateDescription(CardSO card) {
+        if (!string.IsNullOrEmpty(card.description)) return card.description;
+
         string target = card.targetType switch {
             TargetType.Player => "对目标玩家",
             TargetType.Counter => "对目标台面",
-            TargetType.Self => "净化自身",
+            TargetType.Self => "对自身",
             TargetType.Teammate => "对队友",
             _ => string.Empty,
         };
@@ -105,7 +107,14 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
             EffectType.Stun => $"眩晕 {card.duration:F0}秒",
             EffectType.ReverseControls => $"反向操作 {card.duration:F0}秒",
             EffectType.LockCounter => $"锁定 {card.duration:F0}秒",
-            EffectType.CleanWipe or EffectType.SelfClean => "清除所有效果",
+            EffectType.MoveSpeedUp => $"移动速度提升 {card.magnitude:F1}倍，持续 {card.duration:F0}秒",
+            EffectType.InteractionSpeedUp => $"交互速度提升 {card.magnitude:F1}倍，持续 {card.duration:F0}秒",
+            EffectType.DoubleScore => $"得分翻倍，持续 {card.duration:F0}秒",
+            EffectType.ExtraTime => $"延长游戏时间 {card.magnitude:F0}秒",
+            EffectType.InstantComplete => "立即完成当前烹饪",
+            EffectType.SelfClean or EffectType.CleanWipe => "清除所有负面效果",
+            EffectType.Shield => $"护盾，免疫下一次负面效果，持续 {card.duration:F0}秒",
+            EffectType.Reflect => $"反弹，将下一次负面效果反弹给攻击者，持续 {card.duration:F0}秒",
             _ => string.Empty,
         };
         return $"{target}{effect}";

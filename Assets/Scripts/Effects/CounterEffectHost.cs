@@ -56,7 +56,7 @@ public class CounterEffectHost : NetworkBehaviour, IEffectHost {
         }
     }
 
-    public void ApplyEffect(EffectType type, float duration, int sourceTeamId) {
+    public void ApplyEffect(EffectType type, float duration, int sourceTeamId, ulong sourceClientId) {
         if (!IsServer) return;
 
         if (type == EffectType.LockCounter) {

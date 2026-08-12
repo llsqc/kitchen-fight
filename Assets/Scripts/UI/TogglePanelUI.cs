@@ -122,6 +122,7 @@ public class TogglePanelUI : MonoBehaviour {
 
         switch (card.targetType) {
             case TargetType.Player:
+            case TargetType.Teammate:
                 aimPosition = GameInput.Instance.GetMouseWorldPosition();
                 break;
             case TargetType.Counter:
@@ -137,6 +138,15 @@ public class TogglePanelUI : MonoBehaviour {
         foreach (Transform child in cardContainer) {
             if (child.TryGetComponent(out EffectCardUI card)) {
                 if (card.TargetType == TargetType.Player) return true;
+            }
+        }
+        return false;
+    }
+
+    public bool HasTeammateTargetCard() {
+        foreach (Transform child in cardContainer) {
+            if (child.TryGetComponent(out EffectCardUI card)) {
+                if (card.TargetType == TargetType.Teammate) return true;
             }
         }
         return false;

@@ -71,7 +71,7 @@ public class CrosshairUI : MonoBehaviour {
             return;
         }
 
-        if (!TogglePanelUI.Instance.HasPlayerTargetCard()) {
+        if (!TogglePanelUI.Instance.HasPlayerTargetCard() && !TogglePanelUI.Instance.HasTeammateTargetCard()) {
             SetVisible(false);
             return;
         }

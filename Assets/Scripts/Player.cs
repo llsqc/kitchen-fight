@@ -110,7 +110,7 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
         if (card == null) return;
 
         int myTeamId = KitchenGameMultiplayer.Instance.GetTeamIdFromClientId(OwnerClientId);
-        ExecuteItemEffect(card, aimPosition, counterRef, myTeamId);
+        ExecuteItemEffect(card, aimPosition, counterRef, myTeamId, OwnerClientId);
     }
 
     [ClientRpc]
@@ -118,7 +118,7 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
         OnCardAdded?.Invoke(itemIndex);
     }
 
-    private void ExecuteItemEffect(CardSO card, Vector3 aimPosition, NetworkObjectReference counterRef, int myTeamId) {
+    private void ExecuteItemEffect(CardSO card, Vector3 aimPosition, NetworkObjectReference counterRef, int myTeamId, ulong sourceClientId) {
         switch (card.targetType) {
             case TargetType.Player:
                 Collider[] hits = Physics.OverlapSphere(aimPosition, PLAYER_TARGET_RADIUS, playerLayerMask);
@@ -127,7 +127,7 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
                     if (targetPlayer == null || targetPlayer == this) continue;
                     var playerHost = targetPlayer.GetComponent<PlayerEffectHost>();
                     if (playerHost != null) {
-                        playerHost.ApplyEffect(card.effectType, card.duration, myTeamId);
+                        playerHost.ApplyEffect(card.effectType, card.duration, myTeamId, sourceClientId);
                     }
                 }
                 break;
@@ -135,7 +135,20 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
                 if (counterRef.TryGet(out NetworkObject counterNetObj)) {
                     var counterHost = counterNetObj.GetComponent<CounterEffectHost>();
                     if (counterHost != null) {
-                        counterHost.ApplyEffect(card.effectType, card.duration, myTeamId);
+                        counterHost.ApplyEffect(card.effectType, card.duration, myTeamId, sourceClientId);
+                    }
+                }
+                break;
+            case TargetType.Teammate:
+                Collider[] teammateHits = Physics.OverlapSphere(aimPosition, PLAYER_TARGET_RADIUS, playerLayerMask);
+                foreach (var hit in teammateHits) {
+                    Player teammate = hit.GetComponent<Player>();
+                    if (teammate == null || teammate == this) continue;
+                    int targetTeamId = KitchenGameMultiplayer.Instance.GetTeamIdFromClientId(teammate.OwnerClientId);
+                    if (targetTeamId != myTeamId) continue;
+                    var teammateHost = teammate.GetComponent<PlayerEffectHost>();
+                    if (teammateHost != null) {
+                        teammateHost.ApplyBuff(card.effectType, card.duration, card.magnitude);
                     }
                 }
                 break;
@@ -143,7 +156,9 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
                 var selfHost = GetComponent<PlayerEffectHost>();
                 if (selfHost == null) break;
 
-                if (card.duration > 0f) {
+                if (card.cardCategory == CardCategory.Counter) {
+                    selfHost.ApplyCounter(card.effectType, card.duration, card.magnitude);
+                } else if (card.duration > 0f) {
                     // 持续型 Buff
                     selfHost.ApplyBuff(card.effectType, card.duration, card.magnitude);
                 } else {
