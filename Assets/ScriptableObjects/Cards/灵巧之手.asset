@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardName: "\u7075\u5DE7\u4E4B\u624B"
   description: "\u5207\u83DC/\u714E\u70B8\u901F\u5EA6\u63D0\u53472\u500D\uFF0C\u6301\u7EED15\u79D2"
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 46a06a7b3aa7f7240805966c1ecf131a, type: 3}
   placeholderColor: {r: 0.3, g: 0.5, b: 0.9, a: 1}
   gameMode: 0
   cardCategory: 0

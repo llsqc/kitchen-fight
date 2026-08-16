@@ -11,6 +11,12 @@ public class CounterEffectHost : NetworkBehaviour, IEffectHost {
 
     private void Start() {
         CreateLockVisual();
+        lockTimer.OnValueChanged += LockTimer_OnValueChanged;
+    }
+
+    private void LockTimer_OnValueChanged(float previousValue, float newValue) {
+        // NetworkVariable 回调在所有端触发，客户端也能看到锁定板显隐
+        UpdateLockVisual();
     }
 
     private void CreateLockVisual() {
@@ -20,16 +26,27 @@ public class CounterEffectHost : NetworkBehaviour, IEffectHost {
         lockVisual.transform.localPosition = new Vector3(0f, 1.45f, 0f);
         lockVisual.transform.localScale = new Vector3(1.1f, 0.08f, 1.1f);
         Destroy(lockVisual.GetComponent<Collider>());
+        // 先隐藏，材质创建失败（shader 剥离等）也不会留下可见薄板
+        lockVisual.SetActive(false);
 
-        lockMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+        Shader unlitShader = Shader.Find("Universal Render Pipeline/Unlit");
+        if (unlitShader == null) {
+            Debug.LogError("[CounterEffectHost] URP/Unlit shader 未找到（被构建剥离？），锁定视觉效果不可用", this);
+            return;
+        }
+
+        lockMat = new Material(unlitShader);
         lockMat.color = new Color(1f, 0.1f, 0.1f, 0.5f);
+        // URP 透明设置需同时设浮点与关键字，否则按不透明渲染
         lockMat.SetFloat("_Surface", 1);
         lockMat.SetFloat("_Blend", 0);
+        lockMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        lockMat.SetFloat("_SrcBlend", 5);   // SrcAlpha
+        lockMat.SetFloat("_DstBlend", 10);  // OneMinusSrcAlpha
+        lockMat.SetFloat("_ZWrite", 0);
         lockMat.SetOverrideTag("RenderType", "Transparent");
         lockMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
         lockVisual.GetComponent<MeshRenderer>().material = lockMat;
-
-        lockVisual.SetActive(false);
     }
 
 
