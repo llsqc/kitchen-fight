@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardName: Reverse
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: fcce45e0cb7aeac409169c130204a60e, type: 3}
   placeholderColor: {r: 1, g: 0.8, b: 0.2, a: 0.8}
   gameMode: 1
   cardCategory: 1

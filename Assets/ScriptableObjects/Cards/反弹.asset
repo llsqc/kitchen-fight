@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cardName: "\u53CD\u5F39"
   description: 
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 013e6f28a1b3a42449dd3274a08ba265, type: 3}
   placeholderColor: {r: 0.9, g: 0.3, b: 0.3, a: 1}
   gameMode: 1
   cardCategory: 2

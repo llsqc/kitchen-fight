@@ -26437,13 +26437,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 969638908}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc37ef1fc708a704fac4efb0e9c3b5ff, type: 3}
+  m_Script: {fileID: 11500000, guid: f012d0629df4ec549800cbbcd1791d80, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   canvasGroup: {fileID: 969638911}
   backgroundImage: {fileID: 1373336020}
   cardContainer: {fileID: 1679210508}
-  cardPrefab: {fileID: 6651457458774250556, guid: b77c39b739e76dd47ba0ea35d3a69e3c,
+  cardPrefab: {fileID: 6651457458774250556, guid: 53e8d4c6f649f8f45bc9750b056e0094,
     type: 3}
   cardCount: 5
   animationDuration: 0.3
@@ -26451,7 +26451,7 @@ MonoBehaviour:
   shownY: -40
   backgroundAlpha: 0.5
   testAddCardButton: {fileID: 317297023}
-  cardListSO: {fileID: 11400000, guid: 9eb18559dcffc494e9723b86b32756aa, type: 2}
+  cardListSO: {fileID: 11400000, guid: b59e369750da62a4b81b0e39f6cbe502, type: 2}
 --- !u!225 &969638911
 CanvasGroup:
   m_ObjectHideFlags: 0
