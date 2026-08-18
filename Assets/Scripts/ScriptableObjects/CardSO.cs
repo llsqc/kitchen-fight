@@ -37,9 +37,11 @@ public enum EffectType {
 }
 
 public enum Rarity {
-    Common,
-    Rare,
-    Epic,
+    Common = 0,
+    Uncommon = 1,
+    Rare = 2,
+    Epic = 3,
+    Legendary = 4,
 }
 
 public enum TargetType {

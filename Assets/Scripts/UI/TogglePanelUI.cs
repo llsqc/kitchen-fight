@@ -22,12 +22,16 @@ public class TogglePanelUI : MonoBehaviour {
     [SerializeField] private CardListSO cardListSO;
 
     private bool isVisible;
+    private bool hasInitializedPlayerCards;
     private Coroutine animateCoroutine;
     private int nextCardId = 1;
     private GameMode currentGameMode = GameMode.Single;
 
     private void Awake() {
         Instance = this;
+        currentGameMode = KitchenGameMultiplayer.playMultiplayer
+            ? GameMode.Multiplayer
+            : GameMode.Single;
 
         testAddCardButton.onClick.AddListener(() => {
             int itemIndex = CardDealer.PickRandomCardIndex(cardListSO, currentGameMode);
@@ -60,12 +64,24 @@ public class TogglePanelUI : MonoBehaviour {
     }
 
     private void Player_OnSpawned() {
+        if (hasInitializedPlayerCards) return;
+        hasInitializedPlayerCards = true;
+
         Player.LocalInstance.OnCardAdded += Player_OnCardAdded;
 
+        var dealtEffectTypes = new HashSet<EffectType>();
+        bool hasLegendary = false;
         for (int i = 0; i < cardCount; i++) {
-            int itemIndex = CardDealer.PickRandomCardIndex(cardListSO, currentGameMode);
+            int itemIndex = CardDealer.PickRandomCardIndex(
+                cardListSO,
+                currentGameMode,
+                dealtEffectTypes,
+                hasLegendary);
             if (itemIndex != -1) {
                 AddCard(itemIndex);
+                CardSO dealtCard = cardListSO.GetFromIndex(itemIndex);
+                dealtEffectTypes.Add(dealtCard.effectType);
+                hasLegendary |= dealtCard.rarity == Rarity.Legendary;
             }
         }
     }

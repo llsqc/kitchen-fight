@@ -23,10 +23,11 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     [Header("Drag Settings")]
     [SerializeField] private float dragThreshold = 100f;
 
-    [Header("Rarity Colors")]
-    [SerializeField] private Color commonColor = new Color(0.7f, 0.7f, 0.7f, 1f);
-    [SerializeField] private Color rareColor = new Color(0.2f, 0.5f, 1f, 1f);
-    [SerializeField] private Color epicColor = new Color(0.8f, 0.3f, 0.9f, 1f);
+    private static readonly Color CommonColor = new Color32(242, 242, 242, 255);
+    private static readonly Color UncommonColor = new Color32(85, 200, 120, 255);
+    private static readonly Color RareColor = new Color32(77, 141, 255, 255);
+    private static readonly Color EpicColor = new Color32(166, 108, 255, 255);
+    private static readonly Color LegendaryColor = new Color32(255, 191, 63, 255);
 
     public int CardId { get; private set; }
     public int ItemIndex { get; private set; } = -1;
@@ -104,17 +105,19 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
             _ => string.Empty,
         };
         string effect = card.effectType switch {
-            EffectType.Stun => $"眩晕 {card.duration:F0}秒",
-            EffectType.ReverseControls => $"反向操作 {card.duration:F0}秒",
-            EffectType.LockCounter => $"锁定 {card.duration:F0}秒",
+            EffectType.Stun => $"眩晕 {card.duration:0.##}秒",
+            EffectType.ReverseControls => $"反向操作 {card.duration:0.##}秒",
+            EffectType.LockCounter => $"锁定 {card.duration:0.##}秒",
             EffectType.MoveSpeedUp => $"移动速度提升 {card.magnitude:F1}倍，持续 {card.duration:F0}秒",
             EffectType.InteractionSpeedUp => $"交互速度提升 {card.magnitude:F1}倍，持续 {card.duration:F0}秒",
-            EffectType.DoubleScore => $"得分翻倍，持续 {card.duration:F0}秒",
-            EffectType.InstantSubmitAllRecipes => "立即提交当前菜单中的全部菜肴",
+            EffectType.DoubleScore => $"得分提升至 {card.magnitude:F0}倍，持续 {card.duration:F0}秒",
+            EffectType.InstantSubmitAllRecipes => card.magnitude <= 0f
+                ? "立即提交当前菜单中的全部菜肴"
+                : $"立即提交当前菜单最上方 {Mathf.RoundToInt(card.magnitude)} 道菜肴",
             EffectType.InstantComplete => "立即完成当前烹饪",
             EffectType.SelfClean or EffectType.CleanWipe => "清除所有负面效果",
-            EffectType.Shield => $"护盾，免疫下一次负面效果，持续 {card.duration:F0}秒",
-            EffectType.Reflect => $"反弹，将下一次负面效果反弹给攻击者，持续 {card.duration:F0}秒",
+            EffectType.Shield => $"护盾，可抵挡 {Mathf.RoundToInt(card.magnitude)} 次负面效果，持续 {card.duration:F0}秒",
+            EffectType.Reflect => $"反弹 {Mathf.RoundToInt(card.magnitude)} 次负面效果，持续 {card.duration:F0}秒",
             _ => string.Empty,
         };
         return $"{target}{effect}";
@@ -122,13 +125,18 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
 
     private void ApplyRarityVisual(Rarity rarity) {
         Color color = rarity switch {
-            Rarity.Common => commonColor,
-            Rarity.Rare => rareColor,
-            Rarity.Epic => epicColor,
-            _ => commonColor,
+            Rarity.Common => CommonColor,
+            Rarity.Uncommon => UncommonColor,
+            Rarity.Rare => RareColor,
+            Rarity.Epic => EpicColor,
+            Rarity.Legendary => LegendaryColor,
+            _ => CommonColor,
         };
         if (backgroundImage != null) backgroundImage.color = color;
         if (rarityGem != null) rarityGem.color = color;
+        if (iconFrame != null) iconFrame.color = color;
+        if (divider != null) divider.color = color;
+        if (nameText != null) nameText.color = color;
 
         graphics = GetComponentsInChildren<Graphic>(true);
         originalColors = new Color[graphics.Length];

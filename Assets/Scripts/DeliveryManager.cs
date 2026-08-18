@@ -140,23 +140,27 @@ public class DeliveryManager : NetworkBehaviour {
         OnRecipeSuccess?.Invoke(this, new DeliveryEventArgs { teamId = teamId, deliveryPosition = deliveryPosition });
     }
 
-    public void SubmitAllWaitingRecipes(int teamId, Vector3 deliveryPosition) {
+    public void SubmitWaitingRecipes(int teamId, int maximumRecipeCount, Vector3 deliveryPosition) {
         if (!IsServer) return;
         if (teamId < 0 || teamId >= teamWaitingLists.Length) return;
 
-        int recipeCount = teamWaitingLists[teamId].Count;
+        int availableRecipeCount = teamWaitingLists[teamId].Count;
+        int recipeCount = maximumRecipeCount <= 0
+            ? availableRecipeCount
+            : Mathf.Min(maximumRecipeCount, availableRecipeCount);
         if (recipeCount == 0) return;
 
         GetTeamScoreNetworkVariable(teamId).Value += recipeCount * GetScorePerRecipe(teamId);
-        SubmitAllWaitingRecipesClientRpc(teamId, deliveryPosition);
+        SubmitWaitingRecipesClientRpc(teamId, recipeCount, deliveryPosition);
     }
 
     [ClientRpc]
-    private void SubmitAllWaitingRecipesClientRpc(int teamId, Vector3 deliveryPosition) {
+    private void SubmitWaitingRecipesClientRpc(int teamId, int recipeCount, Vector3 deliveryPosition) {
         if (teamId < 0 || teamId >= teamWaitingLists.Length) return;
         if (teamWaitingLists[teamId].Count == 0) return;
 
-        teamWaitingLists[teamId].Clear();
+        int recipesToRemove = Mathf.Min(recipeCount, teamWaitingLists[teamId].Count);
+        teamWaitingLists[teamId].RemoveRange(0, recipesToRemove);
         OnRecipeCompleted?.Invoke(this, new RecipeEventArgs { teamId = teamId });
         OnRecipeSuccess?.Invoke(this, new DeliveryEventArgs { teamId = teamId, deliveryPosition = deliveryPosition });
     }

@@ -165,7 +165,10 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
                     // 即时效果
                     switch (card.effectType) {
                         case EffectType.InstantSubmitAllRecipes:
-                            DeliveryManager.Instance.SubmitAllWaitingRecipes(myTeamId, transform.position);
+                            DeliveryManager.Instance.SubmitWaitingRecipes(
+                                myTeamId,
+                                Mathf.RoundToInt(card.magnitude),
+                                transform.position);
                             break;
                         case EffectType.InstantComplete:
                             if (counterRef.TryGet(out NetworkObject instantCounterNetObj)) {
