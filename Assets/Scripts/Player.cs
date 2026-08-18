@@ -164,8 +164,8 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
                 } else {
                     // 即时效果
                     switch (card.effectType) {
-                        case EffectType.ExtraTime:
-                            KitchenGameManager.Instance.AddGameTime(card.magnitude);
+                        case EffectType.InstantSubmitAllRecipes:
+                            DeliveryManager.Instance.SubmitAllWaitingRecipes(myTeamId, transform.position);
                             break;
                         case EffectType.InstantComplete:
                             if (counterRef.TryGet(out NetworkObject instantCounterNetObj)) {

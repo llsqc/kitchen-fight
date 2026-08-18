@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 638de02de64325247a22de032a2a4d08, type: 3}
-  m_Name: "\u65F6\u95F4\u5EF6\u957F"
+  m_Name: "\u4E00\u952E\u4E0A\u83DC"
   m_EditorClassIdentifier: 
-  cardName: "\u65F6\u95F4\u5EF6\u957F"
-  description: "\u5EF6\u957F\u6E38\u620F\u65F6\u95F415\u79D2"
-  icon: {fileID: 21300000, guid: e24601caad5579b4396b781addd1f16b, type: 3}
+  cardName: "\u4E00\u952E\u4E0A\u83DC"
+  description: "\u7ACB\u5373\u63D0\u4EA4\u5F53\u524D\u83DC\u5355\u4E2D\u7684\u5168\u90E8\u83DC\u80B4\u5E76\u83B7\u5F97\u5BF9\u5E94\u5206\u6570"
+  icon: {fileID: 0}
   placeholderColor: {r: 0.9, g: 0.8, b: 0.2, a: 1}
   gameMode: 0
   cardCategory: 0
@@ -22,4 +22,4 @@ MonoBehaviour:
   effectType: 3
   targetType: 0
   duration: 0
-  magnitude: 15
+  magnitude: 0

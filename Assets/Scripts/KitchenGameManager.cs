@@ -171,11 +171,6 @@ public class KitchenGameManager : NetworkBehaviour {
         return state.Value == State.GameOver;
     }
 
-    public void AddGameTime(float seconds) {
-        if (!IsServer) return;
-        gamePlayingTimer.Value += seconds;
-    }
-
     public bool IsWaitingToStart() {
         return state.Value == State.WaitingToStart;
     }

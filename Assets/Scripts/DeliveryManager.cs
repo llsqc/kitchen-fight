@@ -128,6 +128,40 @@ public class DeliveryManager : NetworkBehaviour {
 
     [ServerRpc(RequireOwnership = false)]
     private void DeliverCorrectRecipeServerRpc(int teamId, int waitingRecipeSOListIndex, Vector3 deliveryPosition) {
+        GetTeamScoreNetworkVariable(teamId).Value += GetScorePerRecipe(teamId);
+        DeliverCorrectRecipeClientRpc(teamId, waitingRecipeSOListIndex, deliveryPosition);
+    }
+
+    [ClientRpc]
+    private void DeliverCorrectRecipeClientRpc(int teamId, int waitingRecipeSOListIndex, Vector3 deliveryPosition) {
+        teamWaitingLists[teamId].RemoveAt(waitingRecipeSOListIndex);
+
+        OnRecipeCompleted?.Invoke(this, new RecipeEventArgs { teamId = teamId });
+        OnRecipeSuccess?.Invoke(this, new DeliveryEventArgs { teamId = teamId, deliveryPosition = deliveryPosition });
+    }
+
+    public void SubmitAllWaitingRecipes(int teamId, Vector3 deliveryPosition) {
+        if (!IsServer) return;
+        if (teamId < 0 || teamId >= teamWaitingLists.Length) return;
+
+        int recipeCount = teamWaitingLists[teamId].Count;
+        if (recipeCount == 0) return;
+
+        GetTeamScoreNetworkVariable(teamId).Value += recipeCount * GetScorePerRecipe(teamId);
+        SubmitAllWaitingRecipesClientRpc(teamId, deliveryPosition);
+    }
+
+    [ClientRpc]
+    private void SubmitAllWaitingRecipesClientRpc(int teamId, Vector3 deliveryPosition) {
+        if (teamId < 0 || teamId >= teamWaitingLists.Length) return;
+        if (teamWaitingLists[teamId].Count == 0) return;
+
+        teamWaitingLists[teamId].Clear();
+        OnRecipeCompleted?.Invoke(this, new RecipeEventArgs { teamId = teamId });
+        OnRecipeSuccess?.Invoke(this, new DeliveryEventArgs { teamId = teamId, deliveryPosition = deliveryPosition });
+    }
+
+    private int GetScorePerRecipe(int teamId) {
         int scoreToAdd = 1;
 
         // 检查该队伍是否有玩家持有 DoubleScore Buff
@@ -141,16 +175,7 @@ public class DeliveryManager : NetworkBehaviour {
             }
         }
 
-        GetTeamScoreNetworkVariable(teamId).Value += scoreToAdd;
-        DeliverCorrectRecipeClientRpc(teamId, waitingRecipeSOListIndex, deliveryPosition);
-    }
-
-    [ClientRpc]
-    private void DeliverCorrectRecipeClientRpc(int teamId, int waitingRecipeSOListIndex, Vector3 deliveryPosition) {
-        teamWaitingLists[teamId].RemoveAt(waitingRecipeSOListIndex);
-
-        OnRecipeCompleted?.Invoke(this, new RecipeEventArgs { teamId = teamId });
-        OnRecipeSuccess?.Invoke(this, new DeliveryEventArgs { teamId = teamId, deliveryPosition = deliveryPosition });
+        return scoreToAdd;
     }
 
     private NetworkVariable<int> GetTeamScoreNetworkVariable(int teamId) {

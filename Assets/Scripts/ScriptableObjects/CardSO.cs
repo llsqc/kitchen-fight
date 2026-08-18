@@ -19,7 +19,7 @@ public enum EffectType {
     MoveSpeedUp,
     InteractionSpeedUp,
     DoubleScore,
-    ExtraTime,
+    InstantSubmitAllRecipes,
     InstantComplete,
     SelfClean,
 
@@ -69,6 +69,6 @@ public class CardSO : ScriptableObject {
     public EffectType effectType;
     public TargetType targetType;
     public float duration;       // 持续时间（秒），0 = 即时效果
-    public float magnitude;      // 效果强度（1.5 = 1.5倍，2 = 翻倍，15 = 延长15秒）
+    public float magnitude;      // 效果强度（1.5 = 1.5倍，2 = 翻倍）
 
 }

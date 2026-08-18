@@ -110,7 +110,7 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
             EffectType.MoveSpeedUp => $"移动速度提升 {card.magnitude:F1}倍，持续 {card.duration:F0}秒",
             EffectType.InteractionSpeedUp => $"交互速度提升 {card.magnitude:F1}倍，持续 {card.duration:F0}秒",
             EffectType.DoubleScore => $"得分翻倍，持续 {card.duration:F0}秒",
-            EffectType.ExtraTime => $"延长游戏时间 {card.magnitude:F0}秒",
+            EffectType.InstantSubmitAllRecipes => "立即提交当前菜单中的全部菜肴",
             EffectType.InstantComplete => "立即完成当前烹饪",
             EffectType.SelfClean or EffectType.CleanWipe => "清除所有负面效果",
             EffectType.Shield => $"护盾，免疫下一次负面效果，持续 {card.duration:F0}秒",
