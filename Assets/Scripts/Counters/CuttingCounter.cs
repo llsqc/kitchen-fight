@@ -7,6 +7,9 @@ using UnityEngine;
 public class CuttingCounter : BaseCounter, IHasProgress {
 
 
+    private const float CUT_COOLDOWN_SECONDS = 0.5f;
+
+
     public static event EventHandler OnAnyCut;
 
     new public static void ResetStaticData() {
@@ -22,6 +25,7 @@ public class CuttingCounter : BaseCounter, IHasProgress {
 
 
     private int cuttingProgress;
+    private float nextCutTime;
 
 
     public override void Interact(Player player) {
@@ -80,7 +84,11 @@ public class CuttingCounter : BaseCounter, IHasProgress {
 
     [ServerRpc(RequireOwnership = false)]
     private void CutObjectServerRpc(NetworkObjectReference playerRef) {
+        if (Time.time < nextCutTime) return;
+
         if (HasKitchenObject() && HasRecipeWithInput(GetKitchenObject().GetKitchenObjectSO())) {
+            nextCutTime = Time.time + CUT_COOLDOWN_SECONDS;
+
             int speedBonus = 1;
             if (playerRef.TryGet(out NetworkObject playerNetObj)) {
                 var player = playerNetObj.GetComponent<Player>();
