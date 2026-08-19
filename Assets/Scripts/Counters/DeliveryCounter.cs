@@ -13,11 +13,15 @@ public class DeliveryCounter : BaseCounter {
             if (player.GetKitchenObject().TryGetPlate(out PlateKitchenObject plateKitchenObject)) {
                 // Only accepts Plates
 
-                DeliveryManager.Instance.DeliverRecipe(plateKitchenObject, teamId, transform.position);
+                DeliveryManager.Instance.DeliverRecipe(plateKitchenObject, teamId, NetworkObjectId);
 
                 KitchenObject.DestroyKitchenObject(player.GetKitchenObject());
             }
         }
+    }
+
+    public int GetTeamId() {
+        return teamId;
     }
 
 }

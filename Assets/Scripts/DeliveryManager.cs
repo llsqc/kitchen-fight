@@ -14,6 +14,7 @@ public class DeliveryManager : NetworkBehaviour {
     public class DeliveryEventArgs : EventArgs {
         public int teamId;
         public Vector3 deliveryPosition;
+        public ulong deliveryCounterNetworkObjectId;
     }
 
 
@@ -79,7 +80,7 @@ public class DeliveryManager : NetworkBehaviour {
         OnRecipeSpawned?.Invoke(this, new RecipeEventArgs { teamId = teamId });
     }
 
-    public void DeliverRecipe(PlateKitchenObject plateKitchenObject, int teamId, Vector3 deliveryPosition) {
+    public void DeliverRecipe(PlateKitchenObject plateKitchenObject, int teamId, ulong deliveryCounterNetworkObjectId) {
         for (int i = 0; i < teamWaitingLists[teamId].Count; i++) {
             RecipeSO waitingRecipeSO = teamWaitingLists[teamId][i];
 
@@ -105,7 +106,7 @@ public class DeliveryManager : NetworkBehaviour {
 
                 if (plateContentsMatchesRecipe) {
                     // Player delivered the correct recipe!
-                    DeliverCorrectRecipeServerRpc(teamId, i, deliveryPosition);
+                    DeliverCorrectRecipeServerRpc(teamId, i, deliveryCounterNetworkObjectId);
                     return;
                 }
             }
@@ -113,31 +114,67 @@ public class DeliveryManager : NetworkBehaviour {
 
         // No matches found!
         // Player did not deliver a correct recipe
-        DeliverIncorrectRecipeServerRpc(teamId, deliveryPosition);
+        DeliverIncorrectRecipeServerRpc(teamId, deliveryCounterNetworkObjectId);
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void DeliverIncorrectRecipeServerRpc(int teamId, Vector3 deliveryPosition) {
-        DeliverIncorrectRecipeClientRpc(teamId, deliveryPosition);
+    private void DeliverIncorrectRecipeServerRpc(int teamId, ulong deliveryCounterNetworkObjectId) {
+        if (!TryGetDeliveryCounter(deliveryCounterNetworkObjectId, teamId, out DeliveryCounter deliveryCounter)) return;
+
+        DeliverIncorrectRecipeClientRpc(teamId, deliveryCounterNetworkObjectId, deliveryCounter.transform.position);
     }
 
     [ClientRpc]
-    private void DeliverIncorrectRecipeClientRpc(int teamId, Vector3 deliveryPosition) {
-        OnRecipeFailed?.Invoke(this, new DeliveryEventArgs { teamId = teamId, deliveryPosition = deliveryPosition });
+    private void DeliverIncorrectRecipeClientRpc(int teamId, ulong deliveryCounterNetworkObjectId, Vector3 deliveryPosition) {
+        OnRecipeFailed?.Invoke(this, new DeliveryEventArgs {
+            teamId = teamId,
+            deliveryPosition = deliveryPosition,
+            deliveryCounterNetworkObjectId = deliveryCounterNetworkObjectId,
+        });
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void DeliverCorrectRecipeServerRpc(int teamId, int waitingRecipeSOListIndex, Vector3 deliveryPosition) {
+    private void DeliverCorrectRecipeServerRpc(int teamId, int waitingRecipeSOListIndex, ulong deliveryCounterNetworkObjectId) {
+        if (!TryGetDeliveryCounter(deliveryCounterNetworkObjectId, teamId, out DeliveryCounter deliveryCounter)) return;
+
         GetTeamScoreNetworkVariable(teamId).Value += GetScorePerRecipe(teamId);
-        DeliverCorrectRecipeClientRpc(teamId, waitingRecipeSOListIndex, deliveryPosition);
+        DeliverCorrectRecipeClientRpc(
+            teamId,
+            waitingRecipeSOListIndex,
+            deliveryCounterNetworkObjectId,
+            deliveryCounter.transform.position);
     }
 
     [ClientRpc]
-    private void DeliverCorrectRecipeClientRpc(int teamId, int waitingRecipeSOListIndex, Vector3 deliveryPosition) {
+    private void DeliverCorrectRecipeClientRpc(
+        int teamId,
+        int waitingRecipeSOListIndex,
+        ulong deliveryCounterNetworkObjectId,
+        Vector3 deliveryPosition) {
         teamWaitingLists[teamId].RemoveAt(waitingRecipeSOListIndex);
 
         OnRecipeCompleted?.Invoke(this, new RecipeEventArgs { teamId = teamId });
-        OnRecipeSuccess?.Invoke(this, new DeliveryEventArgs { teamId = teamId, deliveryPosition = deliveryPosition });
+        OnRecipeSuccess?.Invoke(this, new DeliveryEventArgs {
+            teamId = teamId,
+            deliveryPosition = deliveryPosition,
+            deliveryCounterNetworkObjectId = deliveryCounterNetworkObjectId,
+        });
+    }
+
+    private bool TryGetDeliveryCounter(
+        ulong deliveryCounterNetworkObjectId,
+        int teamId,
+        out DeliveryCounter deliveryCounter) {
+        deliveryCounter = null;
+
+        if (!NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(
+            deliveryCounterNetworkObjectId,
+            out NetworkObject deliveryCounterNetworkObject)) {
+            return false;
+        }
+
+        deliveryCounter = deliveryCounterNetworkObject.GetComponent<DeliveryCounter>();
+        return deliveryCounter != null && deliveryCounter.GetTeamId() == teamId;
     }
 
     public void SubmitWaitingRecipes(int teamId, int maximumRecipeCount, Vector3 deliveryPosition) {
@@ -162,7 +199,11 @@ public class DeliveryManager : NetworkBehaviour {
         int recipesToRemove = Mathf.Min(recipeCount, teamWaitingLists[teamId].Count);
         teamWaitingLists[teamId].RemoveRange(0, recipesToRemove);
         OnRecipeCompleted?.Invoke(this, new RecipeEventArgs { teamId = teamId });
-        OnRecipeSuccess?.Invoke(this, new DeliveryEventArgs { teamId = teamId, deliveryPosition = deliveryPosition });
+        OnRecipeSuccess?.Invoke(this, new DeliveryEventArgs {
+            teamId = teamId,
+            deliveryPosition = deliveryPosition,
+            deliveryCounterNetworkObjectId = ulong.MaxValue,
+        });
     }
 
     private int GetScorePerRecipe(int teamId) {

@@ -21,9 +21,11 @@ public class DeliveryResultUI : MonoBehaviour {
 
 
     private Animator animator;
+    private DeliveryCounter deliveryCounter;
 
     private void Awake() {
         animator = GetComponent<Animator>();
+        deliveryCounter = GetComponentInParent<DeliveryCounter>();
     }
 
     private void Start() {
@@ -37,8 +39,14 @@ public class DeliveryResultUI : MonoBehaviour {
         return teamId == KitchenGameMultiplayer.Instance.GetTeamIdFromClientId(NetworkManager.Singleton.LocalClientId);
     }
 
+    private bool IsSourceCounter(ulong deliveryCounterNetworkObjectId) {
+        return deliveryCounter != null
+            && deliveryCounter.IsSpawned
+            && deliveryCounter.NetworkObjectId == deliveryCounterNetworkObjectId;
+    }
+
     private void DeliveryManager_OnRecipeFailed(object sender, DeliveryManager.DeliveryEventArgs e) {
-        if (!IsLocalTeam(e.teamId)) return;
+        if (!IsLocalTeam(e.teamId) || !IsSourceCounter(e.deliveryCounterNetworkObjectId)) return;
 
         gameObject.SetActive(true);
         animator.SetTrigger(POPUP);
@@ -48,7 +56,7 @@ public class DeliveryResultUI : MonoBehaviour {
     }
 
     private void DeliveryManager_OnRecipeSuccess(object sender, DeliveryManager.DeliveryEventArgs e) {
-        if (!IsLocalTeam(e.teamId)) return;
+        if (!IsLocalTeam(e.teamId) || !IsSourceCounter(e.deliveryCounterNetworkObjectId)) return;
 
         gameObject.SetActive(true);
         animator.SetTrigger(POPUP);
