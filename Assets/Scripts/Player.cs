@@ -41,6 +41,7 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
     private BaseCounter selectedCounter;
     private KitchenObject kitchenObject;
     private PlayerEffectHost effectHost;
+    private readonly List<int> serverCardItemIndices = new List<int>();
 
     private const float PLAYER_TARGET_RADIUS = 1.5f;
     private LayerMask playerLayerMask;
@@ -105,16 +106,68 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void UseCardServerRpc(int itemIndex, Vector3 aimPosition, NetworkObjectReference counterRef) {
+    public void UseCardServerRpc(
+        int itemIndex,
+        Vector3 aimPosition,
+        NetworkObjectReference counterRef,
+        ServerRpcParams serverRpcParams = default) {
+        if (serverRpcParams.Receive.SenderClientId != OwnerClientId) return;
+
+        int serverCardIndex = serverCardItemIndices.IndexOf(itemIndex);
+        if (serverCardIndex < 0) return;
+
         CardSO card = KitchenGameMultiplayer.Instance.GetCardFromIndex(itemIndex);
         if (card == null) return;
+
+        GameMode currentGameMode = KitchenGameMultiplayer.playMultiplayer
+            ? GameMode.Multiplayer
+            : GameMode.Single;
+        if (card.gameMode != currentGameMode) return;
+
+        serverCardItemIndices.RemoveAt(serverCardIndex);
 
         int myTeamId = KitchenGameMultiplayer.Instance.GetTeamIdFromClientId(OwnerClientId);
         ExecuteItemEffect(card, aimPosition, counterRef, myTeamId, OwnerClientId);
     }
 
+    public void DealCard(int itemIndex) {
+        if (!IsServer) return;
+
+        CardSO card = KitchenGameMultiplayer.Instance.GetCardFromIndex(itemIndex);
+        if (card == null) return;
+
+        GameMode currentGameMode = KitchenGameMultiplayer.playMultiplayer
+            ? GameMode.Multiplayer
+            : GameMode.Single;
+        if (card.gameMode != currentGameMode) return;
+
+        serverCardItemIndices.Add(itemIndex);
+
+        ClientRpcParams clientRpcParams = new ClientRpcParams {
+            Send = new ClientRpcSendParams {
+                TargetClientIds = new ulong[] { OwnerClientId }
+            }
+        };
+        AddCardClientRpc(itemIndex, clientRpcParams);
+    }
+
+    [ServerRpc]
+    public void RequestDebugCardServerRpc() {
+        if (!Debug.isDebugBuild) return;
+
+        GameMode currentGameMode = KitchenGameMultiplayer.playMultiplayer
+            ? GameMode.Multiplayer
+            : GameMode.Single;
+        int itemIndex = CardDealer.PickRandomCardIndex(
+            KitchenGameMultiplayer.Instance.GetCardListSO(),
+            currentGameMode);
+        if (itemIndex != -1) {
+            DealCard(itemIndex);
+        }
+    }
+
     [ClientRpc]
-    public void AddCardClientRpc(int itemIndex, ClientRpcParams rpcParams = default) {
+    private void AddCardClientRpc(int itemIndex, ClientRpcParams rpcParams = default) {
         OnCardAdded?.Invoke(itemIndex);
     }
 

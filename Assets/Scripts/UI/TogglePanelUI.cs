@@ -13,7 +13,6 @@ public class TogglePanelUI : MonoBehaviour {
     [SerializeField] private Image backgroundImage;
     [SerializeField] private RectTransform cardContainer;
     [SerializeField] private GameObject cardPrefab;
-    [SerializeField] private int cardCount = 5;
     [SerializeField] private float animationDuration = 0.3f;
     [SerializeField] private float hiddenY = -320f;
     [SerializeField] private float shownY = -40f;
@@ -33,12 +32,14 @@ public class TogglePanelUI : MonoBehaviour {
             ? GameMode.Multiplayer
             : GameMode.Single;
 
-        testAddCardButton.onClick.AddListener(() => {
-            int itemIndex = CardDealer.PickRandomCardIndex(cardListSO, currentGameMode);
-            if (itemIndex != -1) {
-                AddCard(itemIndex);
-            }
-        });
+        if (testAddCardButton != null) {
+            testAddCardButton.gameObject.SetActive(Debug.isDebugBuild);
+            testAddCardButton.onClick.AddListener(() => {
+                if (Player.LocalInstance != null) {
+                    Player.LocalInstance.RequestDebugCardServerRpc();
+                }
+            });
+        }
     }
 
     private void Start() {
@@ -68,22 +69,6 @@ public class TogglePanelUI : MonoBehaviour {
         hasInitializedPlayerCards = true;
 
         Player.LocalInstance.OnCardAdded += Player_OnCardAdded;
-
-        var dealtEffectTypes = new HashSet<EffectType>();
-        bool hasLegendary = false;
-        for (int i = 0; i < cardCount; i++) {
-            int itemIndex = CardDealer.PickRandomCardIndex(
-                cardListSO,
-                currentGameMode,
-                dealtEffectTypes,
-                hasLegendary);
-            if (itemIndex != -1) {
-                AddCard(itemIndex);
-                CardSO dealtCard = cardListSO.GetFromIndex(itemIndex);
-                dealtEffectTypes.Add(dealtCard.effectType);
-                hasLegendary |= dealtCard.rarity == Rarity.Legendary;
-            }
-        }
     }
 
     private void Player_OnCardAdded(int itemIndex) {

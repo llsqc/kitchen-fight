@@ -26445,7 +26445,6 @@ MonoBehaviour:
   cardContainer: {fileID: 1679210508}
   cardPrefab: {fileID: 6651457458774250556, guid: 53e8d4c6f649f8f45bc9750b056e0094,
     type: 3}
-  cardCount: 5
   animationDuration: 0.3
   hiddenY: -320
   shownY: -40

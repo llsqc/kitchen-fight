@@ -4,12 +4,13 @@ using UnityEngine;
 
 public class PlayerEffectHost : NetworkBehaviour, IEffectHost {
 
-    private const float PROTECTION_WINDOW = 10f;
+    // 防止连续控制机制已停用。
+    // private const float PROTECTION_WINDOW = 10f;
 
     // 负面效果计时器
     private NetworkVariable<float> stunTimer = new NetworkVariable<float>(0f);
     private NetworkVariable<float> reverseTimer = new NetworkVariable<float>(0f);
-    private NetworkVariable<float> recentVictimTimer = new NetworkVariable<float>(0f);
+    // private NetworkVariable<float> recentVictimTimer = new NetworkVariable<float>(0f);
     private NetworkVariable<float> cleanWipeFlash = new NetworkVariable<float>(0f);
 
     // 正面效果计时器
@@ -32,7 +33,7 @@ public class PlayerEffectHost : NetworkBehaviour, IEffectHost {
 
         if (stunTimer.Value > 0f) { stunTimer.Value -= Time.deltaTime; if (stunTimer.Value < 0f) stunTimer.Value = 0f; }
         if (reverseTimer.Value > 0f) { reverseTimer.Value -= Time.deltaTime; if (reverseTimer.Value < 0f) reverseTimer.Value = 0f; }
-        if (recentVictimTimer.Value > 0f) { recentVictimTimer.Value -= Time.deltaTime; if (recentVictimTimer.Value < 0f) recentVictimTimer.Value = 0f; }
+        // if (recentVictimTimer.Value > 0f) { recentVictimTimer.Value -= Time.deltaTime; if (recentVictimTimer.Value < 0f) recentVictimTimer.Value = 0f; }
         if (cleanWipeFlash.Value > 0f) { cleanWipeFlash.Value -= Time.deltaTime; if (cleanWipeFlash.Value < 0f) cleanWipeFlash.Value = 0f; }
 
         if (moveSpeedTimer.Value > 0f) { moveSpeedTimer.Value -= Time.deltaTime; if (moveSpeedTimer.Value < 0f) moveSpeedTimer.Value = 0f; }
@@ -80,8 +81,10 @@ public class PlayerEffectHost : NetworkBehaviour, IEffectHost {
     }
 
     private void ApplyEffectDirect(EffectType type, float duration, int sourceTeamId) {
-        // Victim protection: halve duration if within protection window
         float actualDuration = duration;
+
+        /* 防止连续控制机制已停用。
+        // Victim protection: halve duration if within protection window
         if (IsPlayerStateEffect(type) && recentVictimTimer.Value > 0f) {
             actualDuration = duration * 0.5f;
         }
@@ -90,6 +93,7 @@ public class PlayerEffectHost : NetworkBehaviour, IEffectHost {
         if (IsPlayerStateEffect(type)) {
             recentVictimTimer.Value = PROTECTION_WINDOW;
         }
+        */
 
         switch (type) {
             case EffectType.Stun:
@@ -178,7 +182,7 @@ public class PlayerEffectHost : NetworkBehaviour, IEffectHost {
 
     public VictimState GetVictimState() {
         if (shieldCharges.Value > 0) return VictimState.ImmuneBlock;
-        if (recentVictimTimer.Value > 0f) return VictimState.ProtectedHalve;
+        // if (recentVictimTimer.Value > 0f) return VictimState.ProtectedHalve;
         return VictimState.Normal;
     }
 
