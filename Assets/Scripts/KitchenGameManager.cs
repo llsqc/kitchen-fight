@@ -28,6 +28,7 @@ public class KitchenGameManager : NetworkBehaviour {
 
 
     [SerializeField] private Transform playerPrefab;
+    [SerializeField] private Transform[] playerSpawnPoints;
 
 
     private NetworkVariable<State> state = new NetworkVariable<State>(State.WaitingToStart);
@@ -66,7 +67,14 @@ public class KitchenGameManager : NetworkBehaviour {
 
     private void SceneManager_OnLoadEventCompleted(string sceneName, UnityEngine.SceneManagement.LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut) {
         foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds) {
-            Transform playerTransform = Instantiate(playerPrefab);
+            int playerIndex = KitchenGameMultiplayer.Instance.GetPlayerDataIndexFromClientId(clientId);
+            if (playerSpawnPoints == null || playerIndex < 0 || playerIndex >= playerSpawnPoints.Length || playerSpawnPoints[playerIndex] == null) {
+                Debug.LogError($"Missing player spawn point for player index {playerIndex} in scene '{gameObject.scene.name}'.");
+                continue;
+            }
+
+            Transform spawnPoint = playerSpawnPoints[playerIndex];
+            Transform playerTransform = Instantiate(playerPrefab, spawnPoint.position, spawnPoint.rotation);
             playerTransform.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId, true);
         }
     }
