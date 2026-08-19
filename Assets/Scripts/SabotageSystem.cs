@@ -15,11 +15,20 @@ public class SabotageSystem : NetworkBehaviour {
     private float cardDealTimer = 0f;
     // private float compensationTimer = 0f;
     // private float[] teamCompensationCooldown = { 0f, 0f };
+    private bool hasDealtOpeningHands = false;
     private bool hasStarted = false;
 
 
     private void Update() {
         if (!IsServer) return;
+
+        if (!hasDealtOpeningHands) {
+            if (!AreAllPlayersSpawned()) return;
+
+            DealOpeningHands();
+            hasDealtOpeningHands = true;
+        }
+
         if (!KitchenGameManager.Instance.IsGamePlaying()) {
             hasStarted = false;
             return;
@@ -27,7 +36,6 @@ public class SabotageSystem : NetworkBehaviour {
 
         if (!hasStarted) {
             hasStarted = true;
-            DealOpeningHands();
             cardDealTimer = CARD_DEAL_INTERVAL;
             // compensationTimer = COMPENSATION_INTERVAL;
         }
@@ -56,6 +64,20 @@ public class SabotageSystem : NetworkBehaviour {
             CheckCompensation();
         }
         */
+    }
+
+    private bool AreAllPlayersSpawned() {
+        int playerCount = KitchenGameMultiplayer.Instance.GetPlayerDataCount();
+        if (playerCount == 0) return false;
+
+        for (int i = 0; i < playerCount; i++) {
+            PlayerData playerData = KitchenGameMultiplayer.Instance.GetPlayerDataFromPlayerIndex(i);
+            if (GetPlayerByClientId(playerData.clientId) == null) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void DealOpeningHands() {

@@ -1,5 +1,5 @@
 // ItemBoxCounter has been replaced by the card system.
-// Item distribution now goes through Player.AddCardClientRpc.
+// Item distribution now goes through the server-authoritative player card list.
 // This file is kept for reference but the class is disabled.
 /*
 using Unity.Netcode;
@@ -44,7 +44,7 @@ public class ItemBoxCounter : BaseCounter {
         int itemIndex = PickRandomItemIndex();
         if (itemIndex == -1) return;
 
-        player.AddCardClientRpc(itemIndex);
+        player.DealCard(itemIndex);
         cooldownTimer.Value = COOLDOWN_MAX;
     }
 

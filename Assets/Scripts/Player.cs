@@ -40,7 +40,9 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
     private BaseCounter selectedCounter;
     private KitchenObject kitchenObject;
     private PlayerEffectHost effectHost;
-    private readonly List<int> serverCardItemIndices = new List<int>();
+    private readonly NetworkList<int> cardItemIndices = new NetworkList<int>(
+        readPerm: NetworkVariableReadPermission.Owner,
+        writePerm: NetworkVariableWritePermission.Server);
 
     private const float PLAYER_TARGET_RADIUS = 1.5f;
     private LayerMask playerLayerMask;
@@ -67,12 +69,33 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
     public override void OnNetworkSpawn() {
         if (IsOwner) {
             LocalInstance = this;
+            cardItemIndices.OnListChanged += CardItemIndices_OnListChanged;
         }
 
         OnAnyPlayerSpawned?.Invoke(this, EventArgs.Empty);
 
         if (IsServer) {
             NetworkManager.Singleton.OnClientDisconnectCallback += NetworkManager_OnClientDisconnectCallback;
+        }
+    }
+
+    public override void OnNetworkDespawn() {
+        if (IsOwner) {
+            cardItemIndices.OnListChanged -= CardItemIndices_OnListChanged;
+        }
+    }
+
+    private void CardItemIndices_OnListChanged(NetworkListEvent<int> changeEvent) {
+        if (changeEvent.Type == NetworkListEvent<int>.EventType.Add) {
+            OnCardAdded?.Invoke(changeEvent.Value);
+        }
+    }
+
+    public void ReplayCurrentCards(UnityAction<int> receiver) {
+        if (!IsOwner || receiver == null) return;
+
+        for (int i = 0; i < cardItemIndices.Count; i++) {
+            receiver.Invoke(cardItemIndices[i]);
         }
     }
 
@@ -110,7 +133,7 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
         ServerRpcParams serverRpcParams = default) {
         if (serverRpcParams.Receive.SenderClientId != OwnerClientId) return;
 
-        int serverCardIndex = serverCardItemIndices.IndexOf(itemIndex);
+        int serverCardIndex = cardItemIndices.IndexOf(itemIndex);
         if (serverCardIndex < 0) return;
 
         CardSO card = KitchenGameMultiplayer.Instance.GetCardFromIndex(itemIndex);
@@ -121,7 +144,7 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
             : GameMode.Single;
         if (card.gameMode != currentGameMode) return;
 
-        serverCardItemIndices.RemoveAt(serverCardIndex);
+        cardItemIndices.RemoveAt(serverCardIndex);
 
         int myTeamId = KitchenGameMultiplayer.Instance.GetTeamIdFromClientId(OwnerClientId);
         ExecuteItemEffect(card, aimPosition, counterRef, myTeamId, OwnerClientId);
@@ -138,34 +161,7 @@ public class Player : NetworkBehaviour, IKitchenObjectParent {
             : GameMode.Single;
         if (card.gameMode != currentGameMode) return;
 
-        serverCardItemIndices.Add(itemIndex);
-
-        ClientRpcParams clientRpcParams = new ClientRpcParams {
-            Send = new ClientRpcSendParams {
-                TargetClientIds = new ulong[] { OwnerClientId }
-            }
-        };
-        AddCardClientRpc(itemIndex, clientRpcParams);
-    }
-
-    [ServerRpc]
-    public void RequestDebugCardServerRpc() {
-        if (!Debug.isDebugBuild) return;
-
-        GameMode currentGameMode = KitchenGameMultiplayer.playMultiplayer
-            ? GameMode.Multiplayer
-            : GameMode.Single;
-        int itemIndex = CardDealer.PickRandomCardIndex(
-            KitchenGameMultiplayer.Instance.GetCardListSO(),
-            currentGameMode);
-        if (itemIndex != -1) {
-            DealCard(itemIndex);
-        }
-    }
-
-    [ClientRpc]
-    private void AddCardClientRpc(int itemIndex, ClientRpcParams rpcParams = default) {
-        OnCardAdded?.Invoke(itemIndex);
+        cardItemIndices.Add(itemIndex);
     }
 
     private void ExecuteItemEffect(CardSO card, Vector3 aimPosition, NetworkObjectReference counterRef, int myTeamId, ulong sourceClientId) {

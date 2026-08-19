@@ -17,29 +17,15 @@ public class TogglePanelUI : MonoBehaviour {
     [SerializeField] private float hiddenY = -320f;
     [SerializeField] private float shownY = -40f;
     [SerializeField] private float backgroundAlpha = 0.5f;
-    [SerializeField] private Button testAddCardButton;
     [SerializeField] private CardListSO cardListSO;
 
     private bool isVisible;
     private bool hasInitializedPlayerCards;
     private Coroutine animateCoroutine;
     private int nextCardId = 1;
-    private GameMode currentGameMode = GameMode.Single;
 
     private void Awake() {
         Instance = this;
-        currentGameMode = KitchenGameMultiplayer.playMultiplayer
-            ? GameMode.Multiplayer
-            : GameMode.Single;
-
-        if (testAddCardButton != null) {
-            testAddCardButton.gameObject.SetActive(Debug.isDebugBuild);
-            testAddCardButton.onClick.AddListener(() => {
-                if (Player.LocalInstance != null) {
-                    Player.LocalInstance.RequestDebugCardServerRpc();
-                }
-            });
-        }
     }
 
     private void Start() {
@@ -69,6 +55,7 @@ public class TogglePanelUI : MonoBehaviour {
         hasInitializedPlayerCards = true;
 
         Player.LocalInstance.OnCardAdded += Player_OnCardAdded;
+        Player.LocalInstance.ReplayCurrentCards(Player_OnCardAdded);
     }
 
     private void Player_OnCardAdded(int itemIndex) {
@@ -186,10 +173,6 @@ public class TogglePanelUI : MonoBehaviour {
             }
         }
         return default;
-    }
-
-    public void SetGameMode(GameMode mode) {
-        currentGameMode = mode;
     }
 
     private void Show() {
