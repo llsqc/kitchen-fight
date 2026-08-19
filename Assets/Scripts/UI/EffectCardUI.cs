@@ -33,7 +33,7 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
     public int ItemIndex { get; private set; } = -1;
     public TargetType TargetType { get; private set; }
 
-    public System.Action<EffectCardUI> OnCardDismissed;
+    public System.Func<EffectCardUI, bool> OnCardDismissed;
 
     private CardSO cardSO;
 
@@ -114,7 +114,7 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
             EffectType.InstantSubmitAllRecipes => card.magnitude <= 0f
                 ? "立即提交当前菜单中的全部菜肴"
                 : $"立即提交当前菜单最上方 {Mathf.RoundToInt(card.magnitude)} 道菜肴",
-            EffectType.InstantComplete => "立即完成当前烹饪",
+            EffectType.InstantComplete => "立即完成生肉煎制或食材切制",
             EffectType.SelfClean or EffectType.CleanWipe => "清除所有负面效果",
             EffectType.Shield => $"护盾，可抵挡 {Mathf.RoundToInt(card.magnitude)} 次负面效果，持续 {card.duration:F0}秒",
             EffectType.Reflect => $"反弹 {Mathf.RoundToInt(card.magnitude)} 次负面效果，持续 {card.duration:F0}秒",
@@ -193,15 +193,18 @@ public class EffectCardUI : MonoBehaviour, IPointerEnterHandler, IPointerExitHan
         float upDistance = transform.localPosition.y - dragStartLocalPos.y;
 
         if (upDistance >= dragThreshold) {
-            OnCardDismissed?.Invoke(this);
-            Destroy(gameObject);
-        } else {
-            var le = GetComponent<LayoutElement>();
-            if (le != null) le.ignoreLayout = false;
-            isDragging = false;
-            lastAppliedOffset = 0f;
-            currentOffset = 0f;
+            bool wasUsed = OnCardDismissed?.Invoke(this) ?? false;
+            if (wasUsed) {
+                Destroy(gameObject);
+                return;
+            }
         }
+
+        var le = GetComponent<LayoutElement>();
+        if (le != null) le.ignoreLayout = false;
+        isDragging = false;
+        lastAppliedOffset = 0f;
+        currentOffset = 0f;
     }
 
     private void Update() {

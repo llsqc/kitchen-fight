@@ -127,11 +127,15 @@ public class TogglePanelUI : MonoBehaviour {
         return cardUI;
     }
 
-    private void HandleCardDismissed(EffectCardUI dismissedCard) {
-        if (Player.LocalInstance == null) return;
+    private bool HandleCardDismissed(EffectCardUI dismissedCard) {
+        if (Player.LocalInstance == null) return false;
 
         CardSO card = cardListSO.GetFromIndex(dismissedCard.ItemIndex);
-        if (card == null) return;
+        if (card == null) return false;
+
+        if (card.effectType == EffectType.InstantComplete && !CanInstantCompleteSelectedCounter()) {
+            return false;
+        }
 
         Vector3 aimPosition = Vector3.zero;
         Unity.Netcode.NetworkObjectReference counterRef = default;
@@ -148,6 +152,18 @@ public class TogglePanelUI : MonoBehaviour {
         }
 
         Player.LocalInstance.UseCardServerRpc(dismissedCard.ItemIndex, aimPosition, counterRef);
+        return true;
+    }
+
+    private bool CanInstantCompleteSelectedCounter() {
+        Unity.Netcode.NetworkObjectReference counterRef = Player.LocalInstance.GetSelectedCounterRef();
+        if (!counterRef.TryGet(out Unity.Netcode.NetworkObject selectedCounter)) return false;
+
+        CuttingCounter cuttingCounter = selectedCounter.GetComponent<CuttingCounter>();
+        if (cuttingCounter != null) return cuttingCounter.CanInstantComplete();
+
+        StoveCounter stoveCounter = selectedCounter.GetComponent<StoveCounter>();
+        return stoveCounter != null && stoveCounter.CanInstantComplete();
     }
 
     public bool HasPlayerTargetCard() {

@@ -136,7 +136,7 @@ public class CuttingCounter : BaseCounter, IHasProgress {
 
     public void InstantComplete() {
         if (!IsServer) return;
-        if (!HasKitchenObject() || !HasRecipeWithInput(GetKitchenObject().GetKitchenObjectSO())) return;
+        if (!CanInstantComplete()) return;
 
         CuttingRecipeSO cuttingRecipeSO = GetCuttingRecipeSOWithInput(GetKitchenObject().GetKitchenObjectSO());
         cuttingProgress = cuttingRecipeSO.cuttingProgressMax;
@@ -144,6 +144,10 @@ public class CuttingCounter : BaseCounter, IHasProgress {
         KitchenObjectSO outputKitchenObjectSO = GetOutputForInput(GetKitchenObject().GetKitchenObjectSO());
         KitchenObject.DestroyKitchenObject(GetKitchenObject());
         KitchenObject.SpawnKitchenObject(outputKitchenObjectSO, this);
+    }
+
+    public bool CanInstantComplete() {
+        return HasKitchenObject() && HasRecipeWithInput(GetKitchenObject().GetKitchenObjectSO());
     }
 
     private bool HasRecipeWithInput(KitchenObjectSO inputKitchenObjectSO) {

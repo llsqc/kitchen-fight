@@ -216,6 +216,10 @@ public class StoveCounter : BaseCounter, IHasProgress {
         return state.Value == State.Fried;
     }
 
+    public bool CanInstantComplete() {
+        return HasKitchenObject() && state.Value == State.Frying;
+    }
+
     private float GetInteractionSpeedMultiplier() {
         if (lastInteractorClientId.Value == ulong.MaxValue) return 1f;
         foreach (var player in FindObjectsByType<Player>(FindObjectsSortMode.None)) {
@@ -229,24 +233,15 @@ public class StoveCounter : BaseCounter, IHasProgress {
 
     public void InstantComplete() {
         if (!IsServer) return;
-        if (!HasKitchenObject()) return;
+        if (!CanInstantComplete()) return;
 
-        switch (state.Value) {
-            case State.Frying:
-                KitchenObject.DestroyKitchenObject(GetKitchenObject());
-                KitchenObject.SpawnKitchenObject(fryingRecipeSO.output, this);
-                state.Value = State.Fried;
-                burningTimer.Value = 0f;
-                SetBurningRecipeSOClientRpc(
-                    KitchenGameMultiplayer.Instance.GetKitchenObjectSOIndex(GetKitchenObject().GetKitchenObjectSO())
-                );
-                break;
-            case State.Fried:
-                KitchenObject.DestroyKitchenObject(GetKitchenObject());
-                KitchenObject.SpawnKitchenObject(burningRecipeSO.output, this);
-                state.Value = State.Burned;
-                break;
-        }
+        KitchenObject.DestroyKitchenObject(GetKitchenObject());
+        KitchenObject.SpawnKitchenObject(fryingRecipeSO.output, this);
+        state.Value = State.Fried;
+        burningTimer.Value = 0f;
+        SetBurningRecipeSOClientRpc(
+            KitchenGameMultiplayer.Instance.GetKitchenObjectSOIndex(GetKitchenObject().GetKitchenObjectSO())
+        );
     }
 
 }
