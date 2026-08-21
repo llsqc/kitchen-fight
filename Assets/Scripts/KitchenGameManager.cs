@@ -187,6 +187,14 @@ public class KitchenGameManager : NetworkBehaviour {
         return isLocalPlayerReady;
     }
 
+    public bool IsGamePaused() {
+        return isGamePaused.Value;
+    }
+
+    public bool IsLocalGamePaused() {
+        return isLocalGamePaused;
+    }
+
     public float GetGamePlayingTimerNormalized() {
         return 1 - (gamePlayingTimer.Value / gamePlayingTimerMax);
     }

@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using KitchenFight;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class TogglePanelUI : MonoBehaviour {
@@ -30,6 +29,7 @@ public class TogglePanelUI : MonoBehaviour {
 
     private void Start() {
         KitchenGameManager.Instance.OnLocalGamePaused += KitchenGameManager_OnLocalGamePaused;
+        GameInput.Instance.OnTogglePanelAction += GameInput_OnTogglePanelAction;
 
         if (Player.LocalInstance != null) {
             Player_OnSpawned();
@@ -66,6 +66,9 @@ public class TogglePanelUI : MonoBehaviour {
         if (KitchenGameManager.Instance != null) {
             KitchenGameManager.Instance.OnLocalGamePaused -= KitchenGameManager_OnLocalGamePaused;
         }
+        if (GameInput.Instance != null) {
+            GameInput.Instance.OnTogglePanelAction -= GameInput_OnTogglePanelAction;
+        }
         if (Player.LocalInstance != null) {
             Player.LocalInstance.OnCardAdded -= Player_OnCardAdded;
         }
@@ -77,13 +80,11 @@ public class TogglePanelUI : MonoBehaviour {
         }
     }
 
-    private void Update() {
-        if (Keyboard.current.tabKey.wasPressedThisFrame) {
-            if (isVisible) {
-                Hide();
-            } else {
-                Show();
-            }
+    private void GameInput_OnTogglePanelAction(object sender, System.EventArgs e) {
+        if (isVisible) {
+            Hide();
+        } else {
+            Show();
         }
     }
 

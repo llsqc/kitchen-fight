@@ -129,27 +129,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
-                    ""name"": ""UseItem"",
+                    ""name"": ""TogglePanel"",
                     ""type"": ""Button"",
-                    ""id"": ""a1b2c3d4-e5f6-7890-abcd-ef1234567890"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""SelectSlot1"",
-                    ""type"": ""Button"",
-                    ""id"": ""d4e5f6a7-b8c9-0123-def0-123456789abc"",
-                    ""expectedControlType"": ""Button"",
-                    ""processors"": """",
-                    ""interactions"": """",
-                    ""initialStateCheck"": false
-                },
-                {
-                    ""name"": ""SelectSlot2"",
-                    ""type"": ""Button"",
-                    ""id"": ""e5f6a7b8-c9d0-1234-ef01-23456789abcd"",
+                    ""id"": ""2cdd3ef4-e567-42eb-b1b1-e6e7bf365933"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
                     ""interactions"": """",
@@ -346,67 +328,12 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
                 },
                 {
                     ""name"": """",
-                    ""id"": ""b2c3d4e5-f6a7-8901-bcde-f12345678901"",
-                    ""path"": ""<Mouse>/leftButton"",
+                    ""id"": ""644cd4d6-3773-40f0-95dc-dc17e674279b"",
+                    ""path"": ""<Keyboard>/tab"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": """",
-                    ""action"": ""UseItem"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""c3d4e5f6-a7b8-9012-cdef-123456789012"",
-                    ""path"": ""<Gamepad>/buttonNorth"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""UseItem"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""f1a2b3c4-d5e6-7890-abcd-ef2345678901"",
-                    ""path"": ""<Keyboard>/1"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""SelectSlot1"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""f2a3b4c5-d6e7-8901-bcde-f34567890123"",
-                    ""path"": ""<Gamepad>/dpad/up"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""SelectSlot1"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""f3b4c5d6-e7f8-9012-cdef-123456789012"",
-                    ""path"": ""<Keyboard>/2"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""SelectSlot2"",
-                    ""isComposite"": false,
-                    ""isPartOfComposite"": false
-                },
-                {
-                    ""name"": """",
-                    ""id"": ""f4c5d6e7-f8a9-0123-def0-234567890123"",
-                    ""path"": ""<Gamepad>/dpad/down"",
-                    ""interactions"": """",
-                    ""processors"": """",
-                    ""groups"": """",
-                    ""action"": ""SelectSlot2"",
+                    ""action"": ""TogglePanel"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -421,9 +348,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         m_Player_Interact = m_Player.FindAction("Interact", throwIfNotFound: true);
         m_Player_InteractAlternate = m_Player.FindAction("InteractAlternate", throwIfNotFound: true);
         m_Player_Pause = m_Player.FindAction("Pause", throwIfNotFound: true);
-        m_Player_UseItem = m_Player.FindAction("UseItem", throwIfNotFound: true);
-        m_Player_SelectSlot1 = m_Player.FindAction("SelectSlot1", throwIfNotFound: true);
-        m_Player_SelectSlot2 = m_Player.FindAction("SelectSlot2", throwIfNotFound: true);
+        m_Player_TogglePanel = m_Player.FindAction("TogglePanel", throwIfNotFound: true);
     }
 
     ~@PlayerInputActions()
@@ -508,9 +433,7 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Interact;
     private readonly InputAction m_Player_InteractAlternate;
     private readonly InputAction m_Player_Pause;
-    private readonly InputAction m_Player_UseItem;
-    private readonly InputAction m_Player_SelectSlot1;
-    private readonly InputAction m_Player_SelectSlot2;
+    private readonly InputAction m_Player_TogglePanel;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -539,17 +462,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// </summary>
         public InputAction @Pause => m_Wrapper.m_Player_Pause;
         /// <summary>
-        /// Provides access to the underlying input action "Player/UseItem".
+        /// Provides access to the underlying input action "Player/TogglePanel".
         /// </summary>
-        public InputAction @UseItem => m_Wrapper.m_Player_UseItem;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/SelectSlot1".
-        /// </summary>
-        public InputAction @SelectSlot1 => m_Wrapper.m_Player_SelectSlot1;
-        /// <summary>
-        /// Provides access to the underlying input action "Player/SelectSlot2".
-        /// </summary>
-        public InputAction @SelectSlot2 => m_Wrapper.m_Player_SelectSlot2;
+        public InputAction @TogglePanel => m_Wrapper.m_Player_TogglePanel;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -588,15 +503,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Pause.started += instance.OnPause;
             @Pause.performed += instance.OnPause;
             @Pause.canceled += instance.OnPause;
-            @UseItem.started += instance.OnUseItem;
-            @UseItem.performed += instance.OnUseItem;
-            @UseItem.canceled += instance.OnUseItem;
-            @SelectSlot1.started += instance.OnSelectSlot1;
-            @SelectSlot1.performed += instance.OnSelectSlot1;
-            @SelectSlot1.canceled += instance.OnSelectSlot1;
-            @SelectSlot2.started += instance.OnSelectSlot2;
-            @SelectSlot2.performed += instance.OnSelectSlot2;
-            @SelectSlot2.canceled += instance.OnSelectSlot2;
+            @TogglePanel.started += instance.OnTogglePanel;
+            @TogglePanel.performed += instance.OnTogglePanel;
+            @TogglePanel.canceled += instance.OnTogglePanel;
         }
 
         /// <summary>
@@ -620,15 +529,9 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
             @Pause.started -= instance.OnPause;
             @Pause.performed -= instance.OnPause;
             @Pause.canceled -= instance.OnPause;
-            @UseItem.started -= instance.OnUseItem;
-            @UseItem.performed -= instance.OnUseItem;
-            @UseItem.canceled -= instance.OnUseItem;
-            @SelectSlot1.started -= instance.OnSelectSlot1;
-            @SelectSlot1.performed -= instance.OnSelectSlot1;
-            @SelectSlot1.canceled -= instance.OnSelectSlot1;
-            @SelectSlot2.started -= instance.OnSelectSlot2;
-            @SelectSlot2.performed -= instance.OnSelectSlot2;
-            @SelectSlot2.canceled -= instance.OnSelectSlot2;
+            @TogglePanel.started -= instance.OnTogglePanel;
+            @TogglePanel.performed -= instance.OnTogglePanel;
+            @TogglePanel.canceled -= instance.OnTogglePanel;
         }
 
         /// <summary>
@@ -698,25 +601,11 @@ public partial class @PlayerInputActions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnPause(InputAction.CallbackContext context);
         /// <summary>
-        /// Method invoked when associated input action "UseItem" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// Method invoked when associated input action "TogglePanel" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>
         /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnUseItem(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "SelectSlot1" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnSelectSlot1(InputAction.CallbackContext context);
-        /// <summary>
-        /// Method invoked when associated input action "SelectSlot2" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
-        /// </summary>
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
-        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
-        void OnSelectSlot2(InputAction.CallbackContext context);
+        void OnTogglePanel(InputAction.CallbackContext context);
     }
 }
