@@ -15,9 +15,7 @@ public class GameInput : MonoBehaviour {
     public event EventHandler OnInteractAction;
     public event EventHandler OnInteractAlternateAction;
     public event EventHandler OnPauseAction;
-    public event EventHandler OnUseItemAction;
-    public event EventHandler OnSelectSlot1Action;
-    public event EventHandler OnSelectSlot2Action;
+    public event EventHandler OnTogglePanelAction;
     public event EventHandler OnBindingRebind;
 
 
@@ -29,15 +27,10 @@ public class GameInput : MonoBehaviour {
         Interact,
         InteractAlternate,
         Pause,
-        UseItem,
-        SelectSlot1,
-        SelectSlot2,
+        TogglePanel,
         Gamepad_Interact,
         Gamepad_InteractAlternate,
-        Gamepad_Pause,
-        Gamepad_UseItem,
-        Gamepad_SelectSlot1,
-        Gamepad_SelectSlot2
+        Gamepad_Pause
     }
 
 
@@ -59,18 +52,14 @@ public class GameInput : MonoBehaviour {
         playerInputActions.Player.Interact.performed += Interact_performed;
         playerInputActions.Player.InteractAlternate.performed += InteractAlternate_performed;
         playerInputActions.Player.Pause.performed += Pause_performed;
-        playerInputActions.Player.UseItem.performed += UseItem_performed;
-        playerInputActions.Player.SelectSlot1.performed += SelectSlot1_performed;
-        playerInputActions.Player.SelectSlot2.performed += SelectSlot2_performed;
+        playerInputActions.Player.TogglePanel.performed += TogglePanel_performed;
     }
 
     private void OnDestroy() {
         playerInputActions.Player.Interact.performed -= Interact_performed;
         playerInputActions.Player.InteractAlternate.performed -= InteractAlternate_performed;
         playerInputActions.Player.Pause.performed -= Pause_performed;
-        playerInputActions.Player.UseItem.performed -= UseItem_performed;
-        playerInputActions.Player.SelectSlot1.performed -= SelectSlot1_performed;
-        playerInputActions.Player.SelectSlot2.performed -= SelectSlot2_performed;
+        playerInputActions.Player.TogglePanel.performed -= TogglePanel_performed;
 
         playerInputActions.Dispose();
     }
@@ -87,16 +76,8 @@ public class GameInput : MonoBehaviour {
         OnInteractAction?.Invoke(this, EventArgs.Empty);
     }
 
-    private void UseItem_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj) {
-        OnUseItemAction?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void SelectSlot1_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj) {
-        OnSelectSlot1Action?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void SelectSlot2_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj) {
-        OnSelectSlot2Action?.Invoke(this, EventArgs.Empty);
+    private void TogglePanel_performed(UnityEngine.InputSystem.InputAction.CallbackContext obj) {
+        OnTogglePanelAction?.Invoke(this, EventArgs.Empty);
     }
 
     public Vector2 GetMovementVectorNormalized() {
@@ -149,41 +130,49 @@ public class GameInput : MonoBehaviour {
     }
 
     public string GetBindingText(Binding binding) {
+        string displayString;
         switch (binding) {
             default:
             case Binding.Move_Up:
-                return playerInputActions.Player.Move.bindings[1].ToDisplayString();
+                displayString = playerInputActions.Player.Move.bindings[1].ToDisplayString();
+                break;
             case Binding.Move_Down:
-                return playerInputActions.Player.Move.bindings[2].ToDisplayString();
+                displayString = playerInputActions.Player.Move.bindings[2].ToDisplayString();
+                break;
             case Binding.Move_Left:
-                return playerInputActions.Player.Move.bindings[3].ToDisplayString();
+                displayString = playerInputActions.Player.Move.bindings[3].ToDisplayString();
+                break;
             case Binding.Move_Right:
-                return playerInputActions.Player.Move.bindings[4].ToDisplayString();
+                displayString = playerInputActions.Player.Move.bindings[4].ToDisplayString();
+                break;
             case Binding.Interact:
-                return playerInputActions.Player.Interact.bindings[0].ToDisplayString();
+                displayString = playerInputActions.Player.Interact.bindings[0].ToDisplayString();
+                break;
             case Binding.InteractAlternate:
-                return playerInputActions.Player.InteractAlternate.bindings[0].ToDisplayString();
+                displayString = playerInputActions.Player.InteractAlternate.bindings[0].ToDisplayString();
+                break;
             case Binding.Pause:
-                return playerInputActions.Player.Pause.bindings[0].ToDisplayString();
-            case Binding.UseItem:
-                return playerInputActions.Player.UseItem.bindings[0].ToDisplayString();
-            case Binding.SelectSlot1:
-                return playerInputActions.Player.SelectSlot1.bindings[0].ToDisplayString();
-            case Binding.SelectSlot2:
-                return playerInputActions.Player.SelectSlot2.bindings[0].ToDisplayString();
+                displayString = playerInputActions.Player.Pause.bindings[0].ToDisplayString();
+                break;
+            case Binding.TogglePanel:
+                displayString = playerInputActions.Player.TogglePanel.bindings[0].ToDisplayString();
+                break;
             case Binding.Gamepad_Interact:
-                return playerInputActions.Player.Interact.bindings[1].ToDisplayString();
+                displayString = playerInputActions.Player.Interact.bindings[1].ToDisplayString();
+                break;
             case Binding.Gamepad_InteractAlternate:
-                return playerInputActions.Player.InteractAlternate.bindings[1].ToDisplayString();
+                displayString = playerInputActions.Player.InteractAlternate.bindings[1].ToDisplayString();
+                break;
             case Binding.Gamepad_Pause:
-                return playerInputActions.Player.Pause.bindings[1].ToDisplayString();
-            case Binding.Gamepad_UseItem:
-                return playerInputActions.Player.UseItem.bindings[1].ToDisplayString();
-            case Binding.Gamepad_SelectSlot1:
-                return playerInputActions.Player.SelectSlot1.bindings[1].ToDisplayString();
-            case Binding.Gamepad_SelectSlot2:
-                return playerInputActions.Player.SelectSlot2.bindings[1].ToDisplayString();
+                displayString = playerInputActions.Player.Pause.bindings[1].ToDisplayString();
+                break;
         }
+
+        // 缩写常见长键名，避免窄按钮内折行
+        if (displayString == "Escape") {
+            displayString = "Esc";
+        }
+        return displayString;
     }
 
     public void RebindBinding(Binding binding, Action onActionRebound) {
@@ -222,16 +211,8 @@ public class GameInput : MonoBehaviour {
                 inputAction = playerInputActions.Player.Pause;
                 bindingIndex = 0;
                 break;
-            case Binding.UseItem:
-                inputAction = playerInputActions.Player.UseItem;
-                bindingIndex = 0;
-                break;
-            case Binding.SelectSlot1:
-                inputAction = playerInputActions.Player.SelectSlot1;
-                bindingIndex = 0;
-                break;
-            case Binding.SelectSlot2:
-                inputAction = playerInputActions.Player.SelectSlot2;
+            case Binding.TogglePanel:
+                inputAction = playerInputActions.Player.TogglePanel;
                 bindingIndex = 0;
                 break;
             case Binding.Gamepad_Interact:
@@ -246,21 +227,10 @@ public class GameInput : MonoBehaviour {
                 inputAction = playerInputActions.Player.Pause;
                 bindingIndex = 1;
                 break;
-            case Binding.Gamepad_UseItem:
-                inputAction = playerInputActions.Player.UseItem;
-                bindingIndex = 1;
-                break;
-            case Binding.Gamepad_SelectSlot1:
-                inputAction = playerInputActions.Player.SelectSlot1;
-                bindingIndex = 1;
-                break;
-            case Binding.Gamepad_SelectSlot2:
-                inputAction = playerInputActions.Player.SelectSlot2;
-                bindingIndex = 1;
-                break;
         }
 
         inputAction.PerformInteractiveRebinding(bindingIndex)
+            .WithCancelingThrough("<Keyboard>/escape")
             .OnComplete(callback => {
                 callback.Dispose();
                 playerInputActions.Player.Enable();
@@ -271,7 +241,23 @@ public class GameInput : MonoBehaviour {
 
                 OnBindingRebind?.Invoke(this, EventArgs.Empty);
             })
+            .OnCancel(callback => {
+                callback.Dispose();
+                playerInputActions.Player.Enable();
+                onActionRebound();
+            })
             .Start();
+    }
+
+    public void ResetBindings() {
+        foreach (InputAction action in playerInputActions.asset) {
+            action.RemoveAllBindingOverrides();
+        }
+
+        PlayerPrefs.DeleteKey(PLAYER_PREFS_BINDINGS);
+        PlayerPrefs.Save();
+
+        OnBindingRebind?.Invoke(this, EventArgs.Empty);
     }
 
 }

@@ -16,8 +16,7 @@ public class TutorialUI : MonoBehaviour {
     [SerializeField] private TextMeshProUGUI keyGamepadInteractText;
     [SerializeField] private TextMeshProUGUI keyGamepadInteractAlternateText;
     [SerializeField] private TextMeshProUGUI keyGamepadPauseText;
-    [SerializeField] private TextMeshProUGUI keyUseItemText;
-    [SerializeField] private TextMeshProUGUI keyGamepadUseItemText;
+    [SerializeField] private TextMeshProUGUI keyTogglePanelText;
 
 
     private void Start() {
@@ -50,8 +49,7 @@ public class TutorialUI : MonoBehaviour {
         keyGamepadInteractText.text = GameInput.Instance.GetBindingText(GameInput.Binding.Gamepad_Interact);
         keyGamepadInteractAlternateText.text = GameInput.Instance.GetBindingText(GameInput.Binding.Gamepad_InteractAlternate);
         keyGamepadPauseText.text = GameInput.Instance.GetBindingText(GameInput.Binding.Gamepad_Pause);
-        keyUseItemText.text = GameInput.Instance.GetBindingText(GameInput.Binding.UseItem);
-        keyGamepadUseItemText.text = GameInput.Instance.GetBindingText(GameInput.Binding.Gamepad_UseItem);
+        keyTogglePanelText.text = GameInput.Instance.GetBindingText(GameInput.Binding.TogglePanel);
     }
 
     private void Show() {
